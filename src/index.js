@@ -1,11 +1,10 @@
-// @flow
+"use strict";
 
-const fs = require("fs");
-const os = require("os");
-const { join } = require("path");
-const crypto = require("crypto");
-const EventEmitter = require("events");
-const { WriteStream, ReadStream } = require("fs");
+import fs from "fs";
+import os from "os";
+import { join } from "path";
+import crypto from "crypto";
+import { WriteStream, ReadStream } from "fs";
 
 const READER_EVENT_TYPES = ["close", "data", "end", "error", "readable"];
 
@@ -43,7 +42,7 @@ class Reader extends ReadStream {
   }
 }
 
-module.exports = class Capacitor extends WriteStream {
+export default class Capacitor extends WriteStream {
   constructor() {
     super("", {
       flags: "w+",
@@ -51,13 +50,15 @@ module.exports = class Capacitor extends WriteStream {
     });
 
     this._reader = new Reader(this);
-    // this.on('close', () => this.destroy())
     this.on("open", () => this._reader.open());
     this.on("finish", () => {
       this.finished = true;
-      // if (this._reader.readableFlowing === null) {
-      //   this._reader.destroy();
-      // }
+    });
+    this.on("end", () => {
+      this.ended = true;
+    });
+    this.on("error", err => {
+      this.error = err;
     });
   }
 
@@ -231,12 +232,6 @@ module.exports = class Capacitor extends WriteStream {
 
   emit(type, ...args) {
     if (type === "close") {
-      console.log("we probably don't want to forward this");
-      return;
-    }
-
-    if (type === "error") {
-      console.error("NO ERROR SHOULD BE EMITTED HERE!", err);
       return;
     }
 
@@ -248,6 +243,21 @@ module.exports = class Capacitor extends WriteStream {
   }
 
   addListener(type, listener) {
+    if (type === "end" && this.ended) {
+      process.nextTick(listener.bind(this));
+      return this;
+    }
+
+    if (type === "finish" && this.finished) {
+      process.nextTick(listener.bind(this));
+      return this;
+    }
+
+    if (type === "error" && this.error) {
+      process.nextTick(listener.bind(this, this.error));
+      return this;
+    }
+
     if (READER_EVENT_TYPES.includes(type)) {
       this._reader.addListener(type, listener);
       return this;
@@ -265,7 +275,7 @@ module.exports = class Capacitor extends WriteStream {
   }
 
   eventNames() {
-    return [...new Set([...this._reader.eventNames(), ...super.eventNames()])];
+    return [...this._reader.eventNames(), ...super.eventNames()];
   }
 
   rawListeners(type) {
@@ -294,7 +304,7 @@ module.exports = class Capacitor extends WriteStream {
   }
 
   getMaxListeners() {
-    return Math.min(this._reader.getMaxListeners(n), super.getMaxListeners(n));
+    return Math.min(this._reader.getMaxListeners(), super.getMaxListeners());
   }
 
   prependListener(type, listener) {
@@ -312,8 +322,8 @@ module.exports = class Capacitor extends WriteStream {
   }
 
   removeAllListeners() {
-    this._reader.removeAllListeners(n);
-    return super.removeAllListeners(n);
+    this._reader.removeAllListeners();
+    return super.removeAllListeners();
   }
 
   prependOnceListener(type, listener) {
@@ -324,4 +334,4 @@ module.exports = class Capacitor extends WriteStream {
 
     return super.prependOnceListener(type, listener);
   }
-};
+}

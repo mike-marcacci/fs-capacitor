@@ -4,8 +4,7 @@
   },
   "extends" : [
     "eslint:recommended",
-    "plugin:prettier/recommended",
-    "plugin:flowtype/recommended"
+    "plugin:prettier/recommended"
   ],
   "parser": "babel-eslint",
   "rules": {
@@ -16,7 +15,6 @@
     "no-console": ["error", { "allow": ["warn", "error"] }],
   },
   "plugins": [
-    "prettier",
-    "flowtype"
+    "prettier"
   ]
 }
