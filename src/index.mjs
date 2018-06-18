@@ -4,11 +4,10 @@ import fs from "fs";
 import os from "os";
 import { join } from "path";
 import crypto from "crypto";
-import { WriteStream, ReadStream } from "fs";
 
 const READER_EVENT_TYPES = ["close", "data", "end", "error", "readable"];
 
-class Reader extends ReadStream {
+class Reader extends fs.ReadStream {
   constructor(writer) {
     super("", {});
     this._writer = writer;
@@ -42,7 +41,7 @@ class Reader extends ReadStream {
   }
 }
 
-export default class Capacitor extends WriteStream {
+export default class Capacitor extends fs.WriteStream {
   constructor() {
     super("", {
       flags: "w+",
