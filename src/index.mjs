@@ -2,7 +2,7 @@
 
 import fs from "fs";
 import os from "os";
-import { join } from "path";
+import path from "path";
 import crypto from "crypto";
 
 const READER_EVENT_TYPES = ["close", "data", "end", "error", "readable"];
@@ -49,14 +49,14 @@ export default class Capacitor extends fs.WriteStream {
     });
 
     this._reader = new Reader(this);
-    this.on("open", () => this._reader.open());
-    this.on("finish", () => {
+    this.addListener("open", () => this._reader.open());
+    this.addListener("finish", () => {
       this.finished = true;
     });
-    this.on("end", () => {
+    this.addListener("end", () => {
       this.ended = true;
     });
-    this.on("error", err => {
+    this.addListener("error", err => {
       this.error = err;
     });
   }
@@ -77,7 +77,7 @@ export default class Capacitor extends fs.WriteStream {
         return;
       }
 
-      this.path = join(os.tmpdir(), `capacitor-${buffer.toString("hex")}.tmp`);
+      this.path = path.join(os.tmpdir(), `capacitor-${buffer.toString("hex")}.tmp`);
 
       // create the file
       fs.open(this.path, "wx+", (err, fd) => {
@@ -90,9 +90,9 @@ export default class Capacitor extends fs.WriteStream {
         }
 
         const cleanupSync = () => {
-          this._reader.off("close", cleanupAsync);
-          process.off("exit", cleanupSync);
-          process.off("SIGINT", cleanupSync);
+          this._reader.removeListener("close", cleanupAsync);
+          process.removeListener("exit", cleanupSync);
+          process.removeListener("SIGINT", cleanupSync);
 
           if (typeof this.fd === "number") {
             try {
@@ -113,9 +113,9 @@ export default class Capacitor extends fs.WriteStream {
         };
 
         const cleanupAsync = () => {
-          this._reader.off("close", cleanupAsync);
-          process.off("exit", cleanupSync);
-          process.off("SIGINT", cleanupSync);
+          this._reader.removeListener("close", cleanupAsync);
+          process.removeListener("exit", cleanupSync);
+          process.removeListener("SIGINT", cleanupSync);
 
           const unlink = () => {
             fs.unlink(this.path, err => {
@@ -140,9 +140,9 @@ export default class Capacitor extends fs.WriteStream {
         };
 
         // cleanup when our stream closes or when the process exits
-        this._reader.on("close", cleanupAsync);
-        process.on("exit", cleanupSync);
-        process.on("SIGINT", cleanupSync);
+        this._reader.addListener("close", cleanupAsync);
+        process.addListener("exit", cleanupSync);
+        process.addListener("SIGINT", cleanupSync);
 
         super.open();
       });
