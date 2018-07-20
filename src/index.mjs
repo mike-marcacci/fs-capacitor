@@ -77,7 +77,10 @@ export default class Capacitor extends fs.WriteStream {
         return;
       }
 
-      this.path = path.join(os.tmpdir(), `capacitor-${buffer.toString("hex")}.tmp`);
+      this.path = path.join(
+        os.tmpdir(),
+        `capacitor-${buffer.toString("hex")}.tmp`
+      );
 
       // create the file
       fs.open(this.path, "wx+", (err, fd) => {
@@ -98,17 +101,17 @@ export default class Capacitor extends fs.WriteStream {
             try {
               fs.closeSync(this.fd);
             } catch (err) {
-              // An error here probably means the fd was already closed,
-              // but we can still try to unlink the file.
+              // An error here probably means the fd was already closed, but we
+              // can still try to unlink the file.
             }
           }
 
           try {
             fs.unlinkSync(this.path);
           } catch (err) {
-            // If we are unable to unlink the file, the operating
-            // system will clean up on next restart, since we use
-            // store thes in `os.tmpdir()`
+            // If we are unable to unlink the file, the operating system will
+            // clean up on next restart, since we use store thes in
+            // `os.tmpdir()`
           }
         };
 
@@ -119,16 +122,16 @@ export default class Capacitor extends fs.WriteStream {
 
           const unlink = () => {
             fs.unlink(this.path, err => {
-              // If we are unable to unlink the file, the operating
-              // system will clean up on next restart, since we use
-              // store thes in `os.tmpdir()`
+              // If we are unable to unlink the file, the operating system will
+              // clean up on next restart, since we use store thes in
+              // `os.tmpdir()`
             });
           };
 
           if (typeof this.fd === "number") {
             fs.close(this.fd, err => {
-              // An error here probably means the fd was already closed,
-              // but we can still try to unlink the file.
+              // An error here probably means the fd was already closed, but we
+              // can still try to unlink the file.
 
               unlink();
             });
