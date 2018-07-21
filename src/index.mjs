@@ -1,26 +1,38 @@
-"use strict";
-
 import fs from "fs";
 import os from "os";
 import path from "path";
 import crypto from "crypto";
 
-const READER_EVENT_TYPES = ["close", "data", "end", "error", "readable"];
+export class ReadAfterDestroyedError extends Error {}
 
-class Reader extends fs.ReadStream {
-  constructor(writer) {
+export class ReadStream extends fs.ReadStream {
+  constructor(writeStream) {
     super("", {});
-    this._writer = writer;
+
+    this._writeStream = writeStream;
+
+    // Persist terminating events.
+    this.error = this._writeStream.error;
+    this.on("error", error => {
+      this.error = error;
+    });
+
+    this.ended = this._writeStream.error !== null;
+    this.once("end", () => {
+      this.ended = true;
+    });
+
+    this.open();
   }
 
   _read(n) {
     // The writer has finished, so the reader can continue uninterupted.
-    if (this._writer.finished) {
+    if (this._writeStream.finished || this._writeStream.closed) {
       return super._read(n);
     }
 
     // Make sure there's something to read.
-    const unread = this._writer.bytesWritten - this.bytesRead;
+    const unread = this._writeStream.bytesWritten - this.bytesRead;
     if (unread === 0) {
       setImmediate(this._read.bind(this, n));
       return;
@@ -30,35 +42,70 @@ class Reader extends fs.ReadStream {
     return super._read(Math.min(n, unread));
   }
 
-  open() {
-    if (!this._writer || typeof this._writer.fd !== "number") {
-      return;
-    }
+  _destroy(error, callback) {
+    this.fd = null;
+    this.emit("close");
+    callback(error);
+  }
 
-    this.path = this._writer.path;
-    this.fd = this._writer.fd;
+  open() {
+    if (!this._writeStream || typeof this._writeStream.fd !== "number") return;
+
+    this.path = this._writeStream.path;
+    this.fd = this._writeStream.fd;
     super.open();
   }
 }
 
-export default class Capacitor extends fs.WriteStream {
+export class WriteStream extends fs.WriteStream {
   constructor() {
     super("", {
       flags: "w+",
       autoClose: false
     });
 
-    this._reader = new Reader(this);
-    this.addListener("open", () => this._reader.open());
-    this.addListener("finish", () => {
+    this._readStreams = new Set();
+
+    this.on("open", error => {
+      for (let readStream of this._readStreams) {
+        readStream.open();
+      }
+    });
+
+    this.error = null;
+    this.on("error", error => {
+      this.error = error;
+
+      for (let readStream of this._readStreams) {
+        readStream.destroy(error);
+      }
+    });
+
+    this.finished = false;
+    this.once("finish", () => {
       this.finished = true;
     });
-    this.addListener("end", () => {
-      this.ended = true;
-    });
-    this.addListener("error", err => {
-      this.error = err;
-    });
+
+    this._cleanupSync = () => {
+      process.removeListener("exit", this._cleanupSync);
+      process.removeListener("SIGINT", this._cleanupSync);
+
+      if (typeof this.fd === "number") {
+        try {
+          fs.closeSync(this.fd);
+        } catch (error) {
+          // An error here probably means the fd was already closed, but we can
+          // still try to unlink the file.
+        }
+      }
+
+      try {
+        fs.unlinkSync(this.path);
+      } catch (error) {
+        // If we are unable to unlink the file, the operating system will clean up
+        //  on next restart, since we use store thes in `os.tmpdir()`
+      }
+    };
   }
 
   open() {
@@ -68,12 +115,11 @@ export default class Capacitor extends fs.WriteStream {
     }
 
     // generage a random tmp path
-    crypto.randomBytes(48, (err, buffer) => {
-      if (err) {
+    crypto.randomBytes(16, (error, buffer) => {
+      if (error) {
         if (this.autoClose) {
-          this.destroy();
+          this.destroy(error);
         }
-        this.emit("error", err);
         return;
       }
 
@@ -83,257 +129,117 @@ export default class Capacitor extends fs.WriteStream {
       );
 
       // create the file
-      fs.open(this.path, "wx+", (err, fd) => {
-        if (err) {
+      fs.open(this.path, "wx+", (error, fd) => {
+        if (error) {
           if (this.autoClose) {
-            this.destroy();
+            this.destroy(error);
           }
-          this.emit("error", err);
           return;
         }
 
-        const cleanupSync = () => {
-          this._reader.removeListener("close", cleanupAsync);
-          process.removeListener("exit", cleanupSync);
-          process.removeListener("SIGINT", cleanupSync);
-
-          if (typeof this.fd === "number") {
-            try {
-              fs.closeSync(this.fd);
-            } catch (err) {
-              // An error here probably means the fd was already closed, but we
-              // can still try to unlink the file.
-            }
-          }
-
-          try {
-            fs.unlinkSync(this.path);
-          } catch (err) {
-            // If we are unable to unlink the file, the operating system will
-            // clean up on next restart, since we use store thes in
-            // `os.tmpdir()`
-          }
-        };
-
-        const cleanupAsync = () => {
-          this._reader.removeListener("close", cleanupAsync);
-          process.removeListener("exit", cleanupSync);
-          process.removeListener("SIGINT", cleanupSync);
-
-          const unlink = () => {
-            fs.unlink(this.path, err => {
-              // If we are unable to unlink the file, the operating system will
-              // clean up on next restart, since we use store thes in
-              // `os.tmpdir()`
-            });
-          };
-
-          if (typeof this.fd === "number") {
-            fs.close(this.fd, err => {
-              // An error here probably means the fd was already closed, but we
-              // can still try to unlink the file.
-
-              unlink();
-            });
-
-            return;
-          }
-
-          unlink();
-        };
-
         // cleanup when our stream closes or when the process exits
-        this._reader.addListener("close", cleanupAsync);
-        process.addListener("exit", cleanupSync);
-        process.addListener("SIGINT", cleanupSync);
+        process.addListener("exit", this._cleanupSync);
+        process.addListener("SIGINT", this._cleanupSync);
 
         super.open();
       });
     });
   }
 
-  // Handle ReadStream + WriteStream Methods
-  // ---------------------------------------
-
-  destroy(err, callback) {
-    if (err) {
-      this._reader.destroy(err, callback);
-    } else {
-      super.destroy(err, callback);
-    }
-  }
-
-  // Proxy ReadStream Methods
-  // ------------------------
-
-  isPaused(...args) {
-    return this._reader.isPaused(...args);
-  }
-
-  pause(...args) {
-    return this._reader.pause(...args);
-  }
-
-  pipe(...args) {
-    return this._reader.pipe(...args);
-  }
-
-  read(...args) {
-    return this._reader.read(...args);
-  }
-
-  resume(...args) {
-    return this._reader.resume(...args);
-  }
-
-  setEncoding(...args) {
-    return this._reader.setEncoding(...args);
-  }
-
-  unpipe(...args) {
-    return this._reader.unpipe(...args);
-  }
-
-  unshift(...args) {
-    return this._reader.unshift(...args);
-  }
-
-  bytesRead(...args) {
-    return this._reader.bytesRead(...args);
-  }
-
-  // Proxy ReadStream Properties
-  // ---------------------------
-
-  get readableHighWaterMark() {
-    return this._reader.readableHighWaterMark;
-  }
-
-  set readableHighWaterMark(n) {
-    return (this._reader.readableHighWaterMark = n);
-  }
-
-  get readableLength() {
-    return this._reader.readableLength;
-  }
-
-  set readableLength(n) {
-    return (this._reader.readableLength = n);
-  }
-
-  // Handle EventEmitter Methods
-  // ---------------------------
-
-  on(type, listener) {
-    return this.addListener(type, listener);
-  }
-
-  off(type, listener) {
-    return this.removeListener(type, listener);
-  }
-
-  emit(type, ...args) {
-    if (type === "close") {
+  _destroy(error, callback) {
+    const isOpen = typeof this.fd !== "number";
+    if (isOpen) {
+      this.once("open", this._destroy.bind(this, error, callback));
       return;
     }
 
-    if (READER_EVENT_TYPES.includes(type)) {
-      return this._reader.emit(type, ...args);
+    process.removeListener("exit", this._cleanupSync);
+    process.removeListener("SIGINT", this._cleanupSync);
+
+    const unlink = error => {
+      fs.unlink(this.path, unlinkError => {
+        // If we are unable to unlink the file, the operating system will
+        // clean up on next restart, since we use store thes in `os.tmpdir()`
+
+        if (!unlinkError) {
+          this.fd = null;
+          this.closed = true;
+          this.emit("close");
+        }
+
+        callback(unlinkError || error);
+      });
+    };
+
+    if (typeof this.fd === "number") {
+      fs.close(this.fd, closeError => {
+        // An error here probably means the fd was already closed, but we can
+        // still try to unlink the file.
+
+        unlink(closeError || error);
+      });
+
+      return;
     }
 
-    return super.emit(type, ...args);
+    unlink(error);
   }
 
-  addListener(type, listener) {
-    if (type === "end" && this.ended) {
-      process.nextTick(listener.bind(this));
-      return this;
+  destroy(error, callback) {
+    // This is already destroyed.
+    if (this.destroyed) {
+      return super.destroy(error, callback);
     }
 
-    if (type === "finish" && this.finished) {
-      process.nextTick(listener.bind(this));
-      return this;
+    // Call the callback once destroyed.
+    if (typeof callback === "function") {
+      this.once("close", callback.bind(this, error));
     }
 
-    if (type === "error" && this.error) {
-      process.nextTick(listener.bind(this, this.error));
-      return this;
+    // If there is an error, destroy all read streams with the error.
+    if (error) {
+      super.destroy(error, callback);
+      return;
     }
 
-    if (READER_EVENT_TYPES.includes(type)) {
-      this._reader.addListener(type, listener);
-      return this;
+    // All read streams have terminated, so we can destroy this.
+    if (this._readStreams.size === 0) {
+      super.destroy(error, callback);
+
+      return;
     }
 
-    return super.addListener(type, listener);
+    // Wait until all read streams have terminated before destroying this.
+    this._destroyPending = true;
   }
 
-  listeners(type) {
-    if (READER_EVENT_TYPES.includes(type)) {
-      return this._reader.listeners(type);
+  createReadStream() {
+    if (this.destroyed) {
+      throw new ReadAfterDestroyedError(
+        "Cannot create read stream from destroyed capacitor."
+      );
     }
 
-    return super.listeners(type);
+    const readStream = new ReadStream(this);
+    this._readStreams.add(readStream);
+
+    const remove = () => {
+      this._deleteReadStream(readStream);
+      readStream.removeListener("end", remove);
+      readStream.removeListener("close", remove);
+    };
+
+    readStream.addListener("end", remove);
+    readStream.addListener("close", remove);
+
+    return readStream;
   }
 
-  eventNames() {
-    return [...this._reader.eventNames(), ...super.eventNames()];
-  }
-
-  rawListeners(type) {
-    if (READER_EVENT_TYPES.includes(type)) {
-      return this._reader.rawListeners(type);
+  _deleteReadStream(readStream) {
+    if (this._readStreams.delete(readStream) && this._destroyPending) {
+      this.destroy();
     }
-
-    return super.rawListeners(type);
-  }
-
-  listenerCount(type) {
-    if (READER_EVENT_TYPES.includes(type)) {
-      return this._reader.listenerCount(type);
-    }
-
-    return super.listenerCount(type);
-  }
-
-  removeListener(type, listener) {
-    if (READER_EVENT_TYPES.includes(type)) {
-      this._reader.removeListener(type, listener);
-      return this;
-    }
-
-    return super.removeListener(type, listener);
-  }
-
-  getMaxListeners() {
-    return Math.min(this._reader.getMaxListeners(), super.getMaxListeners());
-  }
-
-  prependListener(type, listener) {
-    if (READER_EVENT_TYPES.includes(type)) {
-      this._reader.prependListener(type, listener);
-      return this;
-    }
-
-    return super.prependListener(type, listener);
-  }
-
-  setMaxListeners(n) {
-    this._reader.setMaxListeners(n);
-    return super.setMaxListeners(n);
-  }
-
-  removeAllListeners() {
-    this._reader.removeAllListeners();
-    return super.removeAllListeners();
-  }
-
-  prependOnceListener(type, listener) {
-    if (READER_EVENT_TYPES.includes(type)) {
-      this._reader.prependOnceListener(type, listener);
-      return this;
-    }
-
-    return super.prependOnceListener(type, listener);
   }
 }
+
+export default WriteStream;
