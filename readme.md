@@ -48,9 +48,12 @@ Please do note that FS Capacitor does NOT release disk space _as data is consume
 
 ## API
 
-- `const capacitor = new WriteStream(); Create a new`WriteStream`instance, which inherets all the methods of [`fs.WriteStream`](https://nodejs.org/api/fs.html#fs_class_fs_writestream).
+- `new WriteStream();`
 
-- `const readStream = capacitor.createReadStream()`
+  Create a new `WriteStream` instance, which inherets all the methods of [`fs.WriteStream`](https://nodejs.org/api/fs.html#fs_class_fs_writestream).
+
+- `capacitor.createReadStream()`
+
   Create a new `ReadStream` instance attached to `capacitor`. `ReadStream` inherets all the methods of [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream).
 
   Once a `WriteStream` is fully destroyed, calling `capacitor.createReadStream()` will throw a `ReadAfterDestroyedError` error.
@@ -58,7 +61,5 @@ Please do note that FS Capacitor does NOT release disk space _as data is consume
   As soon as a `ReadStream` ends or is closed (such as by calling `readStream.destroy()`), it is detached from its `WriteStream`.
 
 - `capacitor.destroy(error?: ?Error)`
-
-  If `error` is present, `WriteStream`s still attached are destroyed with the same error.
-
-  If `error` is null or undefined, destruction of underlying resources is delayed until no `ReadStream`s are attached to `capacitor`.
+  - If `error` is present, `WriteStream`s still attached are destroyed with the same error.
+  - If `error` is null or undefined, destruction of underlying resources is delayed until no `ReadStream`s are attached to `capacitor`.
