@@ -17,17 +17,16 @@ export class ReadStream extends fs.ReadStream {
       this.error = error;
     });
 
-    this.ended = this._writeStream.error !== null;
-    this.once("end", () => {
-      this.ended = true;
-    });
-
     this.open();
+  }
+
+  get ended() {
+    return this._readableState.ended;
   }
 
   _read(n) {
     // The writer has finished, so the reader can continue uninterupted.
-    if (this._writeStream.finished || this._writeStream.closed) {
+    if (this._writeStream.finished || this._writeStream.destroyed) {
       return super._read(n);
     }
 
@@ -97,10 +96,6 @@ export class WriteStream extends fs.WriteStream {
     });
 
     this.error = null;
-    this.finished = false;
-    this.once("finish", () => {
-      this.finished = true;
-    });
 
     this._cleanupSync = () => {
       process.removeListener("exit", this._cleanupSync);
@@ -122,6 +117,10 @@ export class WriteStream extends fs.WriteStream {
         //  on next restart, since we use store thes in `os.tmpdir()`
       }
     };
+  }
+
+  get finished() {
+    return this._writableState.finished;
   }
 
   open() {
