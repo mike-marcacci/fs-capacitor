@@ -97,14 +97,6 @@ export class WriteStream extends fs.WriteStream {
     });
 
     this.error = null;
-    this.on("error", error => {
-      this.error = error;
-
-      for (let readStream of this._readStreams) {
-        readStream.destroy(error);
-      }
-    });
-
     this.finished = false;
     this.once("finish", () => {
       this.finished = true;
@@ -177,6 +169,10 @@ export class WriteStream extends fs.WriteStream {
       return;
     }
 
+    if (this.closed) {
+      return callback(error);
+    }
+
     process.removeListener("exit", this._cleanupSync);
     process.removeListener("SIGINT", this._cleanupSync);
 
@@ -210,6 +206,10 @@ export class WriteStream extends fs.WriteStream {
   }
 
   destroy(error, callback) {
+    if (error) {
+      this.error = error;
+    }
+
     // This is already destroyed.
     if (this.destroyed) {
       return super.destroy(error, callback);
@@ -220,12 +220,6 @@ export class WriteStream extends fs.WriteStream {
       this.once("close", callback.bind(this, error));
     }
 
-    // If there is an error, destroy all read streams with the error.
-    if (error) {
-      super.destroy(error, callback);
-      return;
-    }
-
     // All read streams have terminated, so we can destroy this.
     if (this._readStreams.size === 0) {
       super.destroy(error, callback);
@@ -234,6 +228,13 @@ export class WriteStream extends fs.WriteStream {
 
     // Wait until all read streams have terminated before destroying this.
     this._destroyPending = true;
+
+    // If there is an error, destroy all read streams with the error.
+    if (error) {
+      for (let readStream of this._readStreams) {
+        readStream.destroy(error);
+      }
+    }
   }
 
   createReadStream() {
