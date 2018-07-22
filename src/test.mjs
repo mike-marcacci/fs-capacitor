@@ -258,4 +258,33 @@ t.test("Capacitor", async t => {
       "should not store an error on detached read streams"
     );
   });
+
+  await t.test("calls new listeners with past terminating events", async t => {
+    t.type(
+      await new Promise(resolve => capacitor2.on("error", resolve)),
+      Error,
+      "WriteStream error"
+    );
+    await t.resolves(
+      new Promise(resolve => capacitor2.on("close", resolve)),
+      "WriteStream close"
+    );
+    await t.resolves(
+      new Promise(resolve => capacitor1.on("finish", resolve)),
+      "WriteStream finish"
+    );
+    t.type(
+      await new Promise(resolve => capacitor2Stream2.on("error", resolve)),
+      Error,
+      "ReadStream error"
+    );
+    await t.resolves(
+      new Promise(resolve => capacitor2Stream2.on("close", resolve)),
+      "ReadStream close"
+    );
+    await t.resolves(
+      new Promise(resolve => capacitor1Stream2.on("end", resolve)),
+      "ReadStream end"
+    );
+  });
 });

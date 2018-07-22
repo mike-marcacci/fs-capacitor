@@ -44,6 +44,7 @@ export class ReadStream extends fs.ReadStream {
 
   _destroy(error, callback) {
     this.fd = null;
+    this.closed = true;
     this.emit("close");
     callback(error);
   }
@@ -54,6 +55,29 @@ export class ReadStream extends fs.ReadStream {
     this.path = this._writeStream.path;
     this.fd = this._writeStream.fd;
     super.open();
+  }
+
+  addListener(type, listener) {
+    if (type === "error" && this.error) {
+      setImmediate(listener.bind(this, this.error));
+      return this;
+    }
+
+    if (type === "close" && this.closed) {
+      setImmediate(listener.bind(this));
+      return this;
+    }
+
+    if (type === "end" && this.ended) {
+      setImmediate(listener.bind(this));
+      return this;
+    }
+
+    return super.addListener(type, listener);
+  }
+
+  on(type, listener) {
+    return this.addListener(type, listener);
   }
 }
 
@@ -239,6 +263,29 @@ export class WriteStream extends fs.WriteStream {
     if (this._readStreams.delete(readStream) && this._destroyPending) {
       this.destroy();
     }
+  }
+
+  addListener(type, listener) {
+    if (type === "error" && this.error) {
+      setImmediate(listener.bind(this, this.error));
+      return this;
+    }
+
+    if (type === "close" && this.closed) {
+      setImmediate(listener.bind(this));
+      return this;
+    }
+
+    if (type === "finish" && this.finished) {
+      setImmediate(listener.bind(this));
+      return this;
+    }
+
+    return super.addListener(type, listener);
+  }
+
+  on(type, listener) {
+    return this.addListener(type, listener);
   }
 }
 

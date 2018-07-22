@@ -52,6 +52,16 @@ Please do note that FS Capacitor does NOT release disk space _as data is consume
 
 `WriteStream` inherets all the methods of [`fs.WriteStream`](https://nodejs.org/api/fs.html#fs_class_fs_writestream)
 
+#### Events
+
+Note that listeners for the following terminating events will fire **even if the listener is added after the event occurred**:
+
+- error
+- close
+- finish
+
+#### Methods
+
 - `new WriteStream()`
 
   Create a new `WriteStream` instance.
@@ -72,18 +82,10 @@ Please do note that FS Capacitor does NOT release disk space _as data is consume
 
 `ReadStream` inherets all the methods of [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream).
 
-- `.error: ?Error`
+#### Events
 
-  If the stream has been destroyed with an error, it will be available here.
+Note that listeners for the following terminating events will fire **even if the listener is added after the event occurred**:
 
-- `.ended: boolean`
-
-  True if the stream has ended.
-
-- `.destroyed: boolean`
-
-  True if the stream has been destroyed.
-
-- `.closed: boolean`
-
-  True if the stream's underlying resources have been closed.
+- error
+- close
+- end
