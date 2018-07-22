@@ -59,17 +59,17 @@ export class ReadStream extends fs.ReadStream {
 
   addListener(type, listener) {
     if (type === "error" && this.error) {
-      setImmediate(listener.bind(this, this.error));
+      process.nextTick(listener.bind(this, this.error));
       return this;
     }
 
     if (type === "close" && this.closed) {
-      setImmediate(listener.bind(this));
+      process.nextTick(listener.bind(this));
       return this;
     }
 
     if (type === "end" && this.ended) {
-      setImmediate(listener.bind(this));
+      process.nextTick(listener.bind(this));
       return this;
     }
 
@@ -229,7 +229,6 @@ export class WriteStream extends fs.WriteStream {
     // All read streams have terminated, so we can destroy this.
     if (this._readStreams.size === 0) {
       super.destroy(error, callback);
-
       return;
     }
 
@@ -267,17 +266,17 @@ export class WriteStream extends fs.WriteStream {
 
   addListener(type, listener) {
     if (type === "error" && this.error) {
-      setImmediate(listener.bind(this, this.error));
+      process.nextTick(listener.bind(this, this.error));
       return this;
     }
 
     if (type === "close" && this.closed) {
-      setImmediate(listener.bind(this));
+      process.nextTick(listener.bind(this));
       return this;
     }
 
     if (type === "finish" && this.finished) {
-      setImmediate(listener.bind(this));
+      process.nextTick(listener.bind(this));
       return this;
     }
 
