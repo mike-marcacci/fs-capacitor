@@ -33,12 +33,6 @@ t.test("Capacitor", async t => {
 
   // Create a new capacitor
   const capacitor1 = new WriteStream();
-  t.strictSame(
-    capacitor1._readStreams.size,
-    0,
-    "should start with 0 read streams"
-  );
-
   await t.test("creates a temporary file", async t => {
     t.plan(3);
     await new Promise(resolve => capacitor1.on("open", resolve));
@@ -46,6 +40,25 @@ t.test("Capacitor", async t => {
     t.type(capacitor1.fd, "number", "capacitor1.fd should be a number");
     t.ok(fs.existsSync(capacitor1.path), "creates a temp file");
   });
+
+  // Create a new stream before any data has been written
+  let capacitor1Stream1;
+  await t.test(
+    "can add a read stream before any data has been written",
+    async t => {
+      t.strictSame(
+        capacitor1._readStreams.size,
+        0,
+        "should start with 0 read streams"
+      );
+      capacitor1Stream1 = capacitor1.createReadStream();
+      t.strictSame(
+        capacitor1._readStreams.size,
+        1,
+        "should attach a new read stream before receiving data"
+      );
+    }
+  );
 
   // Pipe data to the capacitor
   source.pipe(capacitor1);
@@ -59,12 +72,12 @@ t.test("Capacitor", async t => {
   await new Promise(resolve => waitForBytesWritten(capacitor1, 100, resolve));
 
   // Create a new stream after some data has been written
-  let stream1;
+  let capacitor1Stream2;
   await t.test("can add a read stream after data has been written", async t => {
-    stream1 = capacitor1.createReadStream();
+    capacitor1Stream2 = capacitor1.createReadStream();
     t.strictSame(
       capacitor1._readStreams.size,
-      1,
+      2,
       "should attach a new read stream after first write"
     );
   });
@@ -83,13 +96,11 @@ t.test("Capacitor", async t => {
   await finished;
 
   // Create a new stream after the source has ended
-  let stream2;
-  let stream3;
+  let capacitor1Stream3;
   await t.test(
     "can create a read stream after the source has ended",
     async t => {
-      stream2 = capacitor1.createReadStream();
-      stream3 = capacitor1.createReadStream();
+      capacitor1Stream3 = capacitor1.createReadStream();
       t.strictSame(
         capacitor1._readStreams.size,
         3,
@@ -98,11 +109,15 @@ t.test("Capacitor", async t => {
     }
   );
 
-  // Consume stream1
+  // Consume capacitor1Stream2
   let result1;
   await t.test("streams complete data to a read stream", async t => {
-    result1 = await streamToString(stream1);
-    t.strictSame(stream1.ended, true, "should mark read stream as ended");
+    result1 = await streamToString(capacitor1Stream2);
+    t.strictSame(
+      capacitor1Stream2.ended,
+      true,
+      "should mark read stream as ended"
+    );
     t.strictSame(result1, data, "should stream complete data");
     t.strictSame(
       capacitor1._readStreams.size,
@@ -111,18 +126,22 @@ t.test("Capacitor", async t => {
     );
   });
 
-  // Destroy stream2
+  // Destroy capacitor1Stream1
   await t.test("can destroy a read stream", async t => {
     await new Promise(resolve => {
-      stream2.once("error", resolve);
-      stream2.destroy(new Error("test"));
+      capacitor1Stream1.once("error", resolve);
+      capacitor1Stream1.destroy(new Error("test"));
     });
     t.strictSame(
-      stream2.destroyed,
+      capacitor1Stream1.destroyed,
       true,
       "should mark read stream as destroyed"
     );
-    t.type(stream2.error, Error, "should store an error on read stream");
+    t.type(
+      capacitor1Stream1.error,
+      Error,
+      "should store an error on read stream"
+    );
     t.strictSame(
       capacitor1._readStreams.size,
       1,
@@ -146,23 +165,23 @@ t.test("Capacitor", async t => {
     );
   });
 
-  // Destroy stream2
+  // Destroy capacitor1Stream2
   await t.test("destroys capacitor once no read streams exist", async t => {
     const readStreamDestroyed = new Promise(resolve =>
-      stream3.on("close", resolve)
+      capacitor1Stream3.on("close", resolve)
     );
     const capacitorDestroyed = new Promise(resolve =>
       capacitor1.on("close", resolve)
     );
-    stream3.destroy(null);
+    capacitor1Stream3.destroy(null);
     await readStreamDestroyed;
     t.strictSame(
-      stream3.destroyed,
+      capacitor1Stream3.destroyed,
       true,
       "should mark read stream as destroyed"
     );
     t.strictSame(
-      stream3.error,
+      capacitor1Stream3.error,
       null,
       "should not store an error on read stream"
     );

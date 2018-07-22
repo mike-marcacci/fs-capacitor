@@ -48,18 +48,42 @@ Please do note that FS Capacitor does NOT release disk space _as data is consume
 
 ## API
 
-- `new WriteStream();`
+### WriteStream
 
-  Create a new `WriteStream` instance, which inherets all the methods of [`fs.WriteStream`](https://nodejs.org/api/fs.html#fs_class_fs_writestream).
+`WriteStream` inherets all the methods of [`fs.WriteStream`](https://nodejs.org/api/fs.html#fs_class_fs_writestream)
 
-- `capacitor.createReadStream()`
+- `new WriteStream()`
 
-  Create a new `ReadStream` instance attached to `capacitor`. `ReadStream` inherets all the methods of [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream).
+  Create a new `WriteStream` instance.
 
-  Once a `WriteStream` is fully destroyed, calling `capacitor.createReadStream()` will throw a `ReadAfterDestroyedError` error.
+- `.createReadStream(): () => ReadStream`
+
+  Create a new `ReadStream` instance attached to the `WriteStream` instance.
+
+  Once a `WriteStream` is fully destroyed, calling `.createReadStream()` will throw a `ReadAfterDestroyedError` error.
 
   As soon as a `ReadStream` ends or is closed (such as by calling `readStream.destroy()`), it is detached from its `WriteStream`.
 
-- `capacitor.destroy(error?: ?Error)`
+- `.destroy(error?: ?Error)`
   - If `error` is present, `WriteStream`s still attached are destroyed with the same error.
-  - If `error` is null or undefined, destruction of underlying resources is delayed until no `ReadStream`s are attached to `capacitor`.
+  - If `error` is null or undefined, destruction of underlying resources is delayed until no `ReadStream`s are attached the `WriteStream` instance.
+
+### ReadStream
+
+`ReadStream` inherets all the methods of [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream).
+
+- `.error: ?Error`
+
+  If the stream has been destroyed with an error, it will be available here.
+
+- `.ended: boolean`
+
+  True if the stream has ended.
+
+- `.destroyed: boolean`
+
+  True if the stream has been destroyed.
+
+- `.closed: boolean`
+
+  True if the stream's underlying resources have been closed.
