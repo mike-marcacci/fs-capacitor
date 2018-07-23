@@ -13,7 +13,7 @@ export class ReadStream extends fs.ReadStream {
 
     // Persist terminating events.
     this.error = this._writeStream.error;
-    this.on("error", error => {
+    this.addListener("error", error => {
       this.error = error;
     });
 
@@ -40,13 +40,13 @@ export class ReadStream extends fs.ReadStream {
     const unread = this._writeStream.bytesWritten - this.bytesRead;
     if (unread === 0) {
       const retry = () => {
-        this._writeStream.off("finish", retry);
-        this._writeStream.off("write", retry);
+        this._writeStream.removeListener("finish", retry);
+        this._writeStream.removeListener("write", retry);
         this._read(n);
       };
 
-      this._writeStream.on("finish", retry);
-      this._writeStream.on("write", retry);
+      this._writeStream.addListener("finish", retry);
+      this._writeStream.addListener("write", retry);
       return;
     }
 
@@ -102,7 +102,7 @@ export class WriteStream extends fs.WriteStream {
 
     this._readStreams = new Set();
 
-    this.on("open", error => {
+    this.addListener("open", error => {
       for (let readStream of this._readStreams) {
         readStream.open();
       }
