@@ -25,15 +25,28 @@ export class ReadStream extends fs.ReadStream {
   }
 
   _read(n) {
+    if (typeof this.fd !== "number") {
+      return this.once("open", function() {
+        this._read(n);
+      });
+    }
+
     // The writer has finished, so the reader can continue uninterupted.
-    if (this._writeStream.finished || this._writeStream.destroyed) {
+    if (this._writeStream.finished || this._writeStream.closed) {
       return super._read(n);
     }
 
     // Make sure there's something to read.
     const unread = this._writeStream.bytesWritten - this.bytesRead;
     if (unread === 0) {
-      setImmediate(this._read.bind(this, n));
+      const retry = () => {
+        this._writeStream.off("finish", retry);
+        this._writeStream.off("write", retry);
+        this._read(n);
+      };
+
+      this._writeStream.on("finish", retry);
+      this._writeStream.on("write", retry);
       return;
     }
 
@@ -158,6 +171,13 @@ export class WriteStream extends fs.WriteStream {
 
         super.open();
       });
+    });
+  }
+
+  _write(data, encoding, callback) {
+    super._write(data, encoding, error => {
+      process.nextTick(() => this.emit("write"));
+      callback(error);
     });
   }
 

@@ -31,21 +31,13 @@ t.test("Capacitor", async t => {
     read() {}
   });
 
-  // Create a new capacitor
-  const capacitor1 = new WriteStream();
-  await t.test("creates a temporary file", async t => {
-    t.plan(3);
-    await new Promise(resolve => capacitor1.on("open", resolve));
-    t.type(capacitor1.path, "string", "capacitor1.path should be a string");
-    t.type(capacitor1.fd, "number", "capacitor1.fd should be a number");
-    t.ok(fs.existsSync(capacitor1.path), "creates a temp file");
-  });
-
-  // Create a new stream before any data has been written
+  // Create a new capacitor and read stream before any data has been written
+  let capacitor1;
   let capacitor1Stream1;
   await t.test(
     "can add a read stream before any data has been written",
     async t => {
+      capacitor1 = new WriteStream();
       t.strictSame(
         capacitor1._readStreams.size,
         0,
@@ -57,6 +49,14 @@ t.test("Capacitor", async t => {
         1,
         "should attach a new read stream before receiving data"
       );
+
+      await t.test("creates a temporary file", async t => {
+        t.plan(3);
+        await new Promise(resolve => capacitor1.on("open", resolve));
+        t.type(capacitor1.path, "string", "capacitor1.path should be a string");
+        t.type(capacitor1.fd, "number", "capacitor1.fd should be a number");
+        t.ok(fs.existsSync(capacitor1.path), "creates a temp file");
+      });
     }
   );
 
