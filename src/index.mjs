@@ -14,6 +14,12 @@ class Reader extends fs.ReadStream {
   }
 
   _read(n) {
+    if (typeof this.fd !== "number") {
+      return this.once("open", function() {
+        this._read(n);
+      });
+    }
+
     // The writer has finished, so the reader can continue uninterupted.
     if (this._writer.finished) {
       return super._read(n);
