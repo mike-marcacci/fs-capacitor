@@ -182,8 +182,7 @@ export class WriteStream extends fs.WriteStream {
   }
 
   _destroy(error, callback) {
-    const isOpen = typeof this.fd !== "number";
-    if (isOpen) {
+    if (typeof this.fd !== "number") {
       this.once("open", this._destroy.bind(this, error, callback));
       return;
     }
@@ -197,14 +196,14 @@ export class WriteStream extends fs.WriteStream {
 
     const unlink = error => {
       fs.unlink(this.path, unlinkError => {
-        // If we are unable to unlink the file, the operating system will
-        // clean up on next restart, since we use store thes in `os.tmpdir()`
-
-        if (!unlinkError) {
-          this.fd = null;
-          this.closed = true;
-          this.emit("close");
+        if (unlinkError) {
+          // If we are unable to unlink the file, the operating system will
+          // clean up on next restart, since we use store thes in `os.tmpdir()`
         }
+
+        this.fd = null;
+        this.closed = true;
+        this.emit("close");
 
         callback(unlinkError || error);
       });
