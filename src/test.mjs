@@ -18,7 +18,7 @@ const streamToString = stream =>
 
 const waitForBytesWritten = (stream, bytes, resolve) => {
   if (stream.bytesWritten >= bytes) {
-    resolve();
+    setImmediate(resolve);
     return;
   }
 
@@ -43,7 +43,7 @@ t.test("Capacitor", async t => {
         0,
         "should start with 0 read streams"
       );
-      capacitor1Stream1 = capacitor1.createReadStream();
+      capacitor1Stream1 = capacitor1.createReadStream("capacitor1Stream1");
       t.strictSame(
         capacitor1._readStreams.size,
         1,
@@ -74,7 +74,7 @@ t.test("Capacitor", async t => {
   // Create a new stream after some data has been written
   let capacitor1Stream2;
   await t.test("can add a read stream after data has been written", async t => {
-    capacitor1Stream2 = capacitor1.createReadStream();
+    capacitor1Stream2 = capacitor1.createReadStream("capacitor1Stream2");
     t.strictSame(
       capacitor1._readStreams.size,
       2,
@@ -95,30 +95,44 @@ t.test("Capacitor", async t => {
   source.push(null);
   await finished;
 
+  // Wait until everything's drained
+  // TODO: use stream events instead of a timeout
+  await new Promise(resolve => setTimeout(resolve, 10));
+
   // Create a new stream after the source has ended
   let capacitor1Stream3;
+  let capacitor1Stream4;
   await t.test(
     "can create a read stream after the source has ended",
     async t => {
-      capacitor1Stream3 = capacitor1.createReadStream();
+      capacitor1Stream3 = capacitor1.createReadStream("capacitor1Stream3");
+      capacitor1Stream4 = capacitor1.createReadStream("capacitor1Stream4");
       t.strictSame(
         capacitor1._readStreams.size,
-        3,
+        4,
         "should attach new read streams after end"
       );
     }
   );
 
-  // Consume capacitor1Stream2
-  let result1;
+  // Consume capacitor1Stream2, capacitor1Stream4
   await t.test("streams complete data to a read stream", async t => {
-    result1 = await streamToString(capacitor1Stream2);
+    const result2 = await streamToString(capacitor1Stream2);
     t.strictSame(
       capacitor1Stream2.ended,
       true,
       "should mark read stream as ended"
     );
-    t.strictSame(result1, data, "should stream complete data");
+    t.strictSame(result2, data, "should stream complete data");
+
+    const result4 = await streamToString(capacitor1Stream4);
+    t.strictSame(
+      capacitor1Stream4.ended,
+      true,
+      "should mark read stream as ended"
+    );
+    t.strictSame(result4, data, "should stream complete data");
+
     t.strictSame(
       capacitor1._readStreams.size,
       2,
@@ -211,8 +225,8 @@ t.test("Capacitor", async t => {
   });
 
   const capacitor2 = new WriteStream();
-  const capacitor2Stream1 = capacitor2.createReadStream();
-  const capacitor2Stream2 = capacitor2.createReadStream();
+  const capacitor2Stream1 = capacitor2.createReadStream("capacitor2Stream1");
+  const capacitor2Stream2 = capacitor2.createReadStream("capacitor2Stream2");
 
   const capacitor2ReadStream1Destroyed = new Promise(resolve =>
     capacitor2Stream1.on("close", resolve)

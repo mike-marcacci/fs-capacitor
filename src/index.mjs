@@ -6,8 +6,9 @@ import crypto from "crypto";
 export class ReadAfterDestroyedError extends Error {}
 
 export class ReadStream extends fs.ReadStream {
-  constructor(writeStream) {
+  constructor(writeStream, name) {
     super("", {});
+    this.name = name;
 
     this._writeStream = writeStream;
 
@@ -55,17 +56,27 @@ export class ReadStream extends fs.ReadStream {
   }
 
   _destroy(error, callback) {
-    this.fd = null;
-    this.closed = true;
-    this.emit("close");
-    callback(error);
+    if (typeof this.fd !== "number") {
+      this.once("open", this._destroy.bind(this, error, callback));
+      return;
+    }
+
+    fs.close(this.fd, closeError => {
+      callback(closeError || error);
+      this.fd = null;
+      this.closed = true;
+      this.emit("close");
+    });
   }
 
   open() {
-    if (!this._writeStream || typeof this._writeStream.fd !== "number") return;
+    if (!this._writeStream) return;
+    if (typeof this._writeStream.fd !== "number") {
+      this._writeStream.once("open", () => this.open());
+      return;
+    }
 
     this.path = this._writeStream.path;
-    this.fd = this._writeStream.fd;
     super.open();
   }
 
@@ -101,13 +112,6 @@ export class WriteStream extends fs.WriteStream {
     });
 
     this._readStreams = new Set();
-
-    this.addListener("open", error => {
-      for (let readStream of this._readStreams) {
-        readStream.open();
-      }
-    });
-
     this.error = null;
 
     this._cleanupSync = () => {
@@ -137,17 +141,10 @@ export class WriteStream extends fs.WriteStream {
   }
 
   open() {
-    if (this.fd) {
-      super.open();
-      return;
-    }
-
     // generage a random tmp path
     crypto.randomBytes(16, (error, buffer) => {
       if (error) {
-        if (this.autoClose) {
-          this.destroy(error);
-        }
+        this.destroy(error);
         return;
       }
 
@@ -157,11 +154,9 @@ export class WriteStream extends fs.WriteStream {
       );
 
       // create the file
-      fs.open(this.path, "wx+", (error, fd) => {
+      fs.open(this.path, "w+", (error, fd) => {
         if (error) {
-          if (this.autoClose) {
-            this.destroy(error);
-          }
+          this.destroy(error);
           return;
         }
 
@@ -169,7 +164,9 @@ export class WriteStream extends fs.WriteStream {
         process.addListener("exit", this._cleanupSync);
         process.addListener("SIGINT", this._cleanupSync);
 
-        super.open();
+        this.fd = fd;
+        this.emit("open", fd);
+        this.emit("ready");
       });
     });
   }
@@ -187,25 +184,17 @@ export class WriteStream extends fs.WriteStream {
       return;
     }
 
-    if (this.closed) {
-      return callback(error);
-    }
-
     process.removeListener("exit", this._cleanupSync);
     process.removeListener("SIGINT", this._cleanupSync);
 
     const unlink = error => {
       fs.unlink(this.path, unlinkError => {
-        if (unlinkError) {
-          // If we are unable to unlink the file, the operating system will
-          // clean up on next restart, since we use store thes in `os.tmpdir()`
-        }
-
+        // If we are unable to unlink the file, the operating system will
+        // clean up on next restart, since we use store thes in `os.tmpdir()`
+        callback(unlinkError || error);
         this.fd = null;
         this.closed = true;
         this.emit("close");
-
-        callback(unlinkError || error);
       });
     };
 
@@ -255,14 +244,14 @@ export class WriteStream extends fs.WriteStream {
     }
   }
 
-  createReadStream() {
+  createReadStream(name) {
     if (this.destroyed) {
       throw new ReadAfterDestroyedError(
         "Cannot create read stream from destroyed capacitor."
       );
     }
 
-    const readStream = new ReadStream(this);
+    const readStream = new ReadStream(this, name);
     this._readStreams.add(readStream);
 
     const remove = () => {
