@@ -107,7 +107,6 @@ export class ReadStream extends fs.ReadStream {
 export class WriteStream extends fs.WriteStream {
   constructor() {
     super("", {
-      flags: "w+",
       autoClose: false
     });
 
@@ -154,7 +153,7 @@ export class WriteStream extends fs.WriteStream {
       );
 
       // create the file
-      fs.open(this.path, "w+", (error, fd) => {
+      fs.open(this.path, this.flags, this.mode, (error, fd) => {
         if (error) {
           this.destroy(error);
           return;
@@ -247,7 +246,7 @@ export class WriteStream extends fs.WriteStream {
   createReadStream(name) {
     if (this.destroyed) {
       throw new ReadAfterDestroyedError(
-        "Cannot create read stream from destroyed capacitor."
+        "A ReadStream cannot be created from a destroyed WriteStream."
       );
     }
 
