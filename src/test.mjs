@@ -97,7 +97,7 @@ t.test("Capacitor", async t => {
 
   // Wait until everything's drained
   // TODO: use stream events instead of a timeout
-  await new Promise(resolve => setTimeout(resolve, 10));
+  await new Promise(resolve => setTimeout(resolve, 100));
 
   // Create a new stream after the source has ended
   let capacitor1Stream3;
