@@ -63,5 +63,8 @@
   "lint-staged": {
     "*.{mjs,js}": "eslint",
     "*.{json,md}": "prettier -l"
+  },
+  "prettier": {
+    "proseWrap": "never"
   }
 }
