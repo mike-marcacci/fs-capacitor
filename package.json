@@ -1,7 +1,7 @@
 {
   "name": "fs-capacitor",
   "version": "1.0.1",
-  "description": "",
+  "description": "Filesystem-buffered, passthrough stream that buffers indefinitely rather than propagate backpressure from downstream consumers.",
   "license": "MIT",
   "author": {
     "name": "Mike Marcacci",
