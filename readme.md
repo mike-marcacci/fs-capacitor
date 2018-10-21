@@ -1,6 +1,4 @@
-[![Build Status](https://travis-ci.org/mike-marcacci/fs-capacitor.svg?branch=master)](https://travis-ci.org/mike-marcacci/fs-capacitor)
-[![Current Version](https://badgen.net/npm/v/fs-capacitor)](https://www.npmjs.com/package/fs-capacitor)
-[![Required Node Version](https://badgen.net/npm/node/fs-capacitor)](https://www.npmjs.com/package/fs-capacitor)
+[![Build status](https://travis-ci.org/mike-marcacci/fs-capacitor.svg?branch=master)](https://travis-ci.org/mike-marcacci/fs-capacitor) [![Current version](https://badgen.net/npm/v/fs-capacitor)](https://npm.im/fs-capacitor) ![Supported Node.js versions](https://badgen.net/npm/node/fs-capacitor)
 
 # FS Capacitor
 
