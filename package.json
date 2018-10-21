@@ -26,17 +26,16 @@
   "engines": {
     "node": ">=8.5"
   },
-  "dependencies": {},
   "devDependencies": {
-    "@babel/cli": "^7.0.0-rc.1",
-    "@babel/core": "^7.0.0-rc.1",
-    "@babel/preset-env": "^7.0.0-rc.1",
-    "babel-eslint": "^8.2.5",
+    "@babel/cli": "^7.1.2",
+    "@babel/core": "^7.1.2",
+    "@babel/preset-env": "^7.1.0",
+    "babel-eslint": "^10.0.1",
     "eslint": "^5.4.0",
     "eslint-config-prettier": "^3.0.1",
     "eslint-plugin-node": "^7.0.1",
-    "eslint-plugin-prettier": "^2.6.2",
-    "husky": "^0.14.3",
+    "eslint-plugin-prettier": "^3.0.0",
+    "husky": "^1.1.2",
     "leaked-handles": "^5.2.0",
     "lint-staged": "^7.2.2",
     "npm-run-all": "^4.1.3",
