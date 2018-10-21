@@ -32,7 +32,9 @@
     "@babel/preset-env": "^7.1.0",
     "babel-eslint": "^10.0.1",
     "eslint": "^5.4.0",
+    "eslint-config-env": "^1.2.0",
     "eslint-config-prettier": "^3.0.1",
+    "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-node": "^7.0.1",
     "eslint-plugin-prettier": "^3.0.0",
     "husky": "^1.1.2",
@@ -63,6 +65,17 @@
   "lint-staged": {
     "*.{mjs,js}": "eslint",
     "*.{json,md}": "prettier -l"
+  },
+  "eslintIgnore": [
+    "lib"
+  ],
+  "eslintConfig": {
+    "extends": [
+      "env"
+    ],
+    "rules": {
+      "require-jsdoc": "off"
+    }
   },
   "prettier": {
     "proseWrap": "never"

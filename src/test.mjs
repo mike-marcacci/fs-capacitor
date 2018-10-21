@@ -1,9 +1,9 @@
 import "leaked-handles";
 
 import fs from "fs";
-import WriteStream, { ReadAfterDestroyedError } from ".";
 import stream from "stream";
 import t from "tap";
+import WriteStream, { ReadAfterDestroyedError } from ".";
 
 const streamToString = stream =>
   new Promise((resolve, reject) => {
@@ -73,13 +73,15 @@ t.test("Capacitor", async t => {
 
   // Create a new stream after some data has been written
   let capacitor1Stream2;
-  await t.test("can add a read stream after data has been written", async t => {
+  t.test("can add a read stream after data has been written", t => {
     capacitor1Stream2 = capacitor1.createReadStream("capacitor1Stream2");
     t.strictSame(
       capacitor1._readStreams.size,
       2,
       "should attach a new read stream after first write"
     );
+
+    t.end();
   });
 
   // Add a second chunk of data
@@ -102,18 +104,16 @@ t.test("Capacitor", async t => {
   // Create a new stream after the source has ended
   let capacitor1Stream3;
   let capacitor1Stream4;
-  await t.test(
-    "can create a read stream after the source has ended",
-    async t => {
-      capacitor1Stream3 = capacitor1.createReadStream("capacitor1Stream3");
-      capacitor1Stream4 = capacitor1.createReadStream("capacitor1Stream4");
-      t.strictSame(
-        capacitor1._readStreams.size,
-        4,
-        "should attach new read streams after end"
-      );
-    }
-  );
+  t.test("can create a read stream after the source has ended", t => {
+    capacitor1Stream3 = capacitor1.createReadStream("capacitor1Stream3");
+    capacitor1Stream4 = capacitor1.createReadStream("capacitor1Stream4");
+    t.strictSame(
+      capacitor1._readStreams.size,
+      4,
+      "should attach new read streams after end"
+    );
+    t.end();
+  });
 
   // Consume capacitor1Stream2, capacitor1Stream4
   await t.test("streams complete data to a read stream", async t => {
@@ -164,7 +164,7 @@ t.test("Capacitor", async t => {
   });
 
   // Destroy the capacitor (without an error)
-  await t.test("can delay destruction of a capacitor", async t => {
+  t.test("can delay destruction of a capacitor", t => {
     capacitor1.destroy(null);
 
     t.strictSame(
@@ -177,6 +177,7 @@ t.test("Capacitor", async t => {
       true,
       "should mark for future destruction"
     );
+    t.end();
   });
 
   // Destroy capacitor1Stream2
@@ -216,12 +217,13 @@ t.test("Capacitor", async t => {
   });
 
   // Try to create a new read stream
-  await t.test("cannot create a read stream after destruction", async t => {
+  t.test("cannot create a read stream after destruction", t => {
     t.throws(
       () => capacitor1.createReadStream(),
       ReadAfterDestroyedError,
       "should not create a read stream once destroyed"
     );
+    t.end();
   });
 
   const capacitor2 = new WriteStream();
