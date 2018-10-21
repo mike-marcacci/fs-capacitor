@@ -37,7 +37,7 @@ http.createServer((req, res) => {
 });
 ```
 
-It is especially important to use cases like [apollo-upload-server](https://github.com/jaydenseric/apollo-upload-server/) where server code may need to stash earler parts of a stream until later parts have been processed, and needs to attach multiple consumers at different times.
+It is especially important to use cases like [`graphql-upload`](https://github.com/jaydenseric/graphql-upload) where server code may need to stash earler parts of a stream until later parts have been processed, and needs to attach multiple consumers at different times.
 
 FS Capacitor creates its temporary files in the directory ideneified by `os.tmpdir()` and attempts to remove them:
 
