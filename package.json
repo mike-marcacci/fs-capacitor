@@ -1,7 +1,7 @@
 {
   "name": "fs-capacitor",
   "version": "1.0.1",
-  "description": "",
+  "description": "Filesystem-buffered, passthrough stream that buffers indefinitely rather than propagate backpressure from downstream consumers.",
   "license": "MIT",
   "author": {
     "name": "Mike Marcacci",
@@ -51,7 +51,7 @@
     "prepare:prettier": "prettier 'lib/**/*.{mjs,js}' --write",
     "test": "npm run test:eslint && npm run test:prettier && npm run test:mjs && npm run test:js",
     "test:eslint": "eslint . --ext mjs,js",
-    "test:prettier": "prettier '**/*.{json,md}' -l",
+    "test:prettier": "prettier '**/*.{json,yml,md}' -l",
     "test:mjs": "node --experimental-modules --no-warnings lib/test | tap-mocha-reporter spec",
     "test:js": "node lib/test | tap-mocha-reporter spec",
     "prepublishOnly": "npm run prepare && npm test",
@@ -64,7 +64,7 @@
   },
   "lint-staged": {
     "*.{mjs,js}": "eslint",
-    "*.{json,md}": "prettier -l"
+    "*.{json,yml,md}": "prettier -l"
   },
   "eslintIgnore": [
     "lib"
