@@ -77,29 +77,6 @@ export class ReadStream extends fs.ReadStream {
     this.path = this._writeStream.path;
     super.open();
   }
-
-  addListener(type, listener) {
-    if (type === "error" && this.error) {
-      process.nextTick(listener.bind(this, this.error));
-      return this;
-    }
-
-    if (type === "close" && this.closed) {
-      process.nextTick(listener.bind(this));
-      return this;
-    }
-
-    if (type === "end" && this.ended) {
-      process.nextTick(listener.bind(this));
-      return this;
-    }
-
-    return super.addListener(type, listener);
-  }
-
-  on(type, listener) {
-    return this.addListener(type, listener);
-  }
 }
 
 export class WriteStream extends fs.WriteStream {
@@ -164,13 +141,6 @@ export class WriteStream extends fs.WriteStream {
         this.emit("open", fd);
         this.emit("ready");
       });
-    });
-  }
-
-  _write(data, encoding, callback) {
-    super._write(data, encoding, error => {
-      process.nextTick(() => this.emit("write"));
-      callback(error);
     });
   }
 
@@ -256,29 +226,6 @@ export class WriteStream extends fs.WriteStream {
   _deleteReadStream(readStream) {
     if (this._readStreams.delete(readStream) && this._destroyPending)
       this.destroy();
-  }
-
-  addListener(type, listener) {
-    if (type === "error" && this.error) {
-      process.nextTick(listener.bind(this, this.error));
-      return this;
-    }
-
-    if (type === "close" && this.closed) {
-      process.nextTick(listener.bind(this));
-      return this;
-    }
-
-    if (type === "finish" && this.finished) {
-      process.nextTick(listener.bind(this));
-      return this;
-    }
-
-    return super.addListener(type, listener);
-  }
-
-  on(type, listener) {
-    return this.addListener(type, listener);
   }
 }
 
