@@ -127,7 +127,7 @@ export class WriteStream extends fs.WriteStream {
       );
 
       // create the file
-      fs.open(this.path, this.flags, this.mode, (error, fd) => {
+      fs.open(this.path, "wx", this.mode, (error, fd) => {
         if (error) {
           this.destroy(error);
           return;
