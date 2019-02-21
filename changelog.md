@@ -18,3 +18,4 @@
 
 - Updated dependencies.
 - Move configs out of package.json
+- Use `wx` file flag instead of default `w` (thanks to @mattbretl via #8)
