@@ -50,23 +50,22 @@ Please do note that FS Capacitor does NOT release disk space _as data is consume
 
 `WriteStream` inherets all the methods of [`fs.WriteStream`](https://nodejs.org/api/fs.html#fs_class_fs_writestream)
 
-#### Methods
+#### `new WriteStream()`
 
-- `new WriteStream()`
+Create a new `WriteStream` instance.
 
-  Create a new `WriteStream` instance.
+#### `.createReadStream(): ReadStream`
 
-- `.createReadStream(): () => ReadStream`
+Create a new `ReadStream` instance attached to the `WriteStream` instance.
 
-  Create a new `ReadStream` instance attached to the `WriteStream` instance.
+Once a `WriteStream` is fully destroyed, calling `.createReadStream()` will throw a `ReadAfterDestroyedError` error.
 
-  Once a `WriteStream` is fully destroyed, calling `.createReadStream()` will throw a `ReadAfterDestroyedError` error.
+As soon as a `ReadStream` ends or is closed (such as by calling `readStream.destroy()`), it is detached from its `WriteStream`.
 
-  As soon as a `ReadStream` ends or is closed (such as by calling `readStream.destroy()`), it is detached from its `WriteStream`.
+#### `.destroy(error?: ?Error): void`
 
-- `.destroy(error?: ?Error)`
-  - If `error` is present, `WriteStream`s still attached are destroyed with the same error.
-  - If `error` is null or undefined, destruction of underlying resources is delayed until no `ReadStream`s are attached the `WriteStream` instance.
+- If `error` is present, `WriteStream`s still attached are destroyed with the same error.
+- If `error` is null or undefined, destruction of underlying resources is delayed until no `ReadStream`s are attached the `WriteStream` instance.
 
 ### ReadStream
 
