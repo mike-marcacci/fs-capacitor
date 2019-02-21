@@ -28,21 +28,21 @@
   },
   "devDependencies": {
     "@babel/cli": "^7.1.2",
-    "@babel/core": "^7.1.2",
-    "@babel/preset-env": "^7.1.0",
+    "@babel/core": "^7.3.3",
+    "@babel/preset-env": "^7.3.1",
     "babel-eslint": "^10.0.1",
-    "eslint": "^5.4.0",
-    "eslint-config-env": "^2.0.0",
-    "eslint-config-prettier": "^3.0.1",
-    "eslint-plugin-import": "^2.14.0",
+    "eslint": "^5.14.1",
+    "eslint-config-env": "^3.0.0",
+    "eslint-config-prettier": "^4.0.0",
+    "eslint-plugin-import": "^2.16.0",
     "eslint-plugin-import-order-alphabetical": "^0.0.1",
     "eslint-plugin-node": "^8.0.1",
     "eslint-plugin-prettier": "^3.0.0",
     "husky": "^1.1.2",
     "leaked-handles": "^5.2.0",
-    "lint-staged": "^8.1.0",
-    "prettier": "^1.14.2",
-    "tap": "^12.0.1"
+    "lint-staged": "^8.1.4",
+    "prettier": "^1.16.4",
+    "tap": "^12.5.3"
   },
   "scripts": {
     "prepare": "npm run prepare:clean && npm run prepare:mjs && npm run prepare:js && npm run prepare:prettier",
@@ -57,28 +57,5 @@
     "test:js": "node lib/test | tap-mocha-reporter spec",
     "prepublishOnly": "npm run prepare && npm test",
     "watch": "watch 'npm run prepublishOnly --silent' src --interval 1"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    "*.{mjs,js}": "eslint",
-    "*.{json,yml,md}": "prettier -l"
-  },
-  "eslintIgnore": [
-    "lib"
-  ],
-  "eslintConfig": {
-    "extends": [
-      "env"
-    ],
-    "rules": {
-      "require-jsdoc": "off"
-    }
-  },
-  "prettier": {
-    "proseWrap": "never"
   }
 }

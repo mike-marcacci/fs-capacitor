@@ -1,9 +1,20 @@
 # fs-capacitor changelog
 
-## 2.0.0
+## 1.0.0
 
-### Major
+- Initial release.
+
+### 1.0.1
+
+- Use default fs flags and mode
+
+## 2.0.0
 
 - Updated dependencies.
 - Add tests for special stream scenarios.
 - BREAKING: Remove special handling of terminating events, see [jaydenseric/graphql-upload#131](https://github.com/jaydenseric/graphql-upload/issues/131)
+
+### 2.0.1
+
+- Updated dependencies.
+- Move configs out of package.json
