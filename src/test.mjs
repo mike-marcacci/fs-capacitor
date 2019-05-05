@@ -219,6 +219,12 @@ const withChunkSize = size =>
       t.end();
     });
 
+    const writeEventBytesWritten = new Promise(resolve => {
+      capacitor1.once("write", () => {
+        resolve(capacitor1.bytesWritten);
+      });
+    });
+
     // Add a second chunk of data
     const chunk2 = "2".repeat(size);
     source.push(chunk2);
@@ -228,6 +234,15 @@ const withChunkSize = size =>
     await new Promise(resolve =>
       waitForBytesWritten(capacitor1, 2 * size, resolve)
     );
+
+    // Make sure write event is called after bytes are written to the filesystem
+    await t.test("write event emitted after bytes are written", async t => {
+      t.strictSame(
+        await writeEventBytesWritten,
+        2 * size,
+        "bytesWritten should include new chunk"
+      );
+    });
 
     // End the source & wait until capacitor is finished
     const finished = new Promise(resolve => capacitor1.once("finish", resolve));

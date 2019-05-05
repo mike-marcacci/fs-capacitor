@@ -145,8 +145,10 @@ export class WriteStream extends fs.WriteStream {
   }
 
   _write(chunk, encoding, callback) {
-    super._write(chunk, encoding, callback);
-    this.emit("write");
+    super._write(chunk, encoding, error => {
+      if (!error) this.emit("write");
+      callback(error);
+    });
   }
 
   _destroy(error, callback) {
