@@ -144,6 +144,11 @@ export class WriteStream extends fs.WriteStream {
     });
   }
 
+  _write(chunk, encoding, callback) {
+    super._write(chunk, encoding, callback);
+    this.emit("write");
+  }
+
   _destroy(error, callback) {
     if (typeof this.fd !== "number") {
       this.once("open", this._destroy.bind(this, error, callback));

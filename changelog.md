@@ -24,3 +24,4 @@
 
 - Updated dev dependencies.
 - Fix mjs structure to work with node v12.
+- Fix a bug that would pause consumption of read streams until completion. (thanks to @Nikosmonaut's investigation in #9).
