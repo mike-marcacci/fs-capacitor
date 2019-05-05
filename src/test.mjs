@@ -351,12 +351,15 @@ const withChunkSize = size =>
 
     // Try to create a new read stream
     t.test("cannot create a read stream after destruction", t => {
-      t.throws(
-        () => capacitor1.createReadStream(),
-        ReadAfterDestroyedError,
-        "should not create a read stream once destroyed"
-      );
-      t.end();
+      try {
+        capacitor1.createReadStream();
+      } catch (error) {
+        t.ok(
+          error instanceof ReadAfterDestroyedError,
+          "should not create a read stream once destroyed"
+        );
+        t.end();
+      }
     });
 
     const capacitor2 = new WriteStream();
