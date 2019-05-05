@@ -3,7 +3,7 @@ import "leaked-handles";
 import fs from "fs";
 import stream from "stream";
 import t from "tap";
-import WriteStream, { ReadAfterDestroyedError } from ".";
+import WriteStream, { ReadAfterDestroyedError } from "./index.mjs";
 
 const streamToString = stream =>
   new Promise((resolve, reject) => {
