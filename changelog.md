@@ -29,3 +29,7 @@
 ### 2.0.3
 
 - Emit write event _after_ bytes have been written to the filesystem.
+
+### 2.0.4
+
+- Restore native module support in node < 12.

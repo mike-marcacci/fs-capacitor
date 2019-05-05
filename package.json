@@ -19,9 +19,11 @@
   ],
   "files": [
     "lib",
-    "!lib/test.*"
+    "!lib/test.*",
+    "src",
+    "!src/test.*"
   ],
-  "main": "lib/index.js",
+  "main": "lib",
   "module": "src/index.mjs",
   "engines": {
     "node": ">=8.5"
@@ -29,8 +31,9 @@
   "devDependencies": {
     "@babel/cli": "^7.1.2",
     "@babel/core": "^7.3.3",
-    "@babel/preset-env": "^7.3.1",
+    "@babel/plugin-transform-modules-commonjs": "^7.4.4",
     "babel-eslint": "^10.0.1",
+    "babel-plugin-minify-replace": "^0.5.0",
     "eslint": "^5.14.1",
     "eslint-config-env": "^5.0.0",
     "eslint-config-prettier": "^4.0.0",
@@ -45,11 +48,13 @@
     "tap": "^13.1.2"
   },
   "scripts": {
-    "prepare": "rm -rf lib && babel src/index.mjs -d lib && prettier 'lib/**/*.js' --write",
+    "prepare": "rm -rf lib && mkdir -p lib && yarn prepare:mjs && yarn prepare:cjs && prettier 'lib/**/*.js' --write",
+    "prepare:mjs": "cp src/index.mjs lib/",
+    "prepare:cjs": "babel --plugins @babel/plugin-transform-modules-commonjs --out-dir lib src/index.mjs ",
     "test": "npm run test:eslint && npm run test:prettier && npm run test:tap",
     "test:eslint": "eslint . --ext mjs,js",
     "test:prettier": "prettier '**/*.{json,yml,md}' -l",
-    "test:tap": "node --experimental-modules --no-warnings src/test | tap-mocha-reporter spec",
+    "test:tap": "node --experimental-modules --no-warnings src/test.mjs | tap-mocha-reporter spec",
     "prepublishOnly": "npm run prepare && npm test"
   }
 }
