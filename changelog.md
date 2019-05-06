@@ -4,7 +4,7 @@
 
 ### Major
 
-- Revert support for Node.js v12 `--experimental-modules` mode that was published in [v2.0.2](https://github.com/mike-marcacci/fs-capacitor/releases/tag/v2.0.2) that broke compatibility with earlier Node.js versions, and test both ESM and CJS builds (skipping `--experimental-modules` tests for Node.js v12).
+- Revert support for Node.js v12 `--experimental-modules` mode that was published in [v2.0.2](https://github.com/mike-marcacci/fs-capacitor/releases/tag/v2.0.2) that broke compatibility with earlier Node.js versions and test both ESM and CJS builds (skipping `--experimental-modules` tests for Node.js v12), via [#11](https://github.com/mike-marcacci/fs-capacitor/pull/11).
 
 ### Patch
 
