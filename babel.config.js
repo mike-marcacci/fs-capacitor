@@ -2,12 +2,11 @@ module.exports = {
   comments: false,
   presets: [
     [
-      "@babel/preset-env",
+      "@babel/env",
       {
-        targets: {
-          node: "8.5"
-        },
-        modules: process.env.BABEL_ESM ? false : "commonjs"
+        modules: process.env.BABEL_ESM ? false : "commonjs",
+        shippedProposals: true,
+        loose: true
       }
     ]
   ]
