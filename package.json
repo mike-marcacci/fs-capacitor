@@ -18,10 +18,7 @@
     "clone"
   ],
   "files": [
-    "lib",
-    "!lib/test.*",
-    "src",
-    "!src/test.*"
+    "lib"
   ],
   "main": "lib",
   "module": "src/index.mjs",
