@@ -12,7 +12,7 @@
 
 - Updated dependencies.
 - Add tests for special stream scenarios.
-- BREAKING: Remove special handling of terminating events, see [jaydenseric/graphql-upload#131](https://github.com/jaydenseric/graphql-upload/issues/131)
+- **BREAKING:** Remove special handling of terminating events, see [jaydenseric/graphql-upload#131](https://github.com/jaydenseric/graphql-upload/issues/131)
 
 ### 2.0.1
 
@@ -30,14 +30,9 @@
 
 - Emit write event _after_ bytes have been written to the filesystem.
 
-## Next
-
-### Major
+### 2.0.4
 
 - Revert support for Node.js v12 `--experimental-modules` mode that was published in [v2.0.2](https://github.com/mike-marcacci/fs-capacitor/releases/tag/v2.0.2) that broke compatibility with earlier Node.js versions and test both ESM and CJS builds (skipping `--experimental-modules` tests for Node.js v12), via [#11](https://github.com/mike-marcacci/fs-capacitor/pull/11).
-
-### Patch
-
 - Use package `browserslist` field instead of configuring `@babel/preset-env` directly.
 - Configure `@babel/preset-env` to use shipped proposals and loose mode.
 - Give dev tool config files `.json` extensions so they can be Prettier linted.
