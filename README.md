@@ -13,7 +13,7 @@ import WriteStream from "fs-capacitor";
 
 http.createServer((req, res) => {
   const capacitor = new WriteStream();
-  const destination = fs.createReadStream("destination.txt");
+  const destination = fs.createWriteStream("destination.txt");
 
   // pipe data to the capacitor
   req.pipe(capacitor);
