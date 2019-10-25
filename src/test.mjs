@@ -299,11 +299,6 @@ const withChunkSize = size =>
         true,
         "should mark read stream as destroyed"
       );
-      t.type(
-        capacitor1Stream1.error,
-        Error,
-        "should store an error on read stream"
-      );
       t.strictSame(
         capacitor1._readStreams.size,
         1,
@@ -316,15 +311,11 @@ const withChunkSize = size =>
       capacitor1.destroy(null);
 
       t.strictSame(
-        capacitor1.destroyed,
+        capacitor1.closed,
         false,
         "should not destroy while read streams exist"
       );
-      t.strictSame(
-        capacitor1._destroyPending,
-        true,
-        "should mark for future destruction"
-      );
+      t.true(capacitor1._destroyPending, "should mark for future destruction");
       t.end();
     });
 
@@ -342,11 +333,6 @@ const withChunkSize = size =>
         capacitor1Stream3.destroyed,
         true,
         "should mark read stream as destroyed"
-      );
-      t.strictSame(
-        capacitor1Stream3.error,
-        null,
-        "should not store an error on read stream"
       );
       t.strictSame(
         capacitor1._readStreams.size,
@@ -392,37 +378,20 @@ const withChunkSize = size =>
     await capacitor2ReadStream1Destroyed;
 
     await t.test("propagates errors to attached read streams", async t => {
-      capacitor2.destroy();
-      await new Promise(resolve => setImmediate(resolve));
-      t.strictSame(
-        capacitor2Stream2.destroyed,
-        false,
-        "should not immediately mark attached read streams as destroyed"
-      );
-
+      capacitor2Stream2.on("error", () => {});
+      capacitor2.on("error", () => {});
       capacitor2.destroy(new Error("test"));
       await capacitor2Destroyed;
 
-      t.type(capacitor2.error, Error, "should store an error on capacitor");
       t.strictSame(
         capacitor2.destroyed,
         true,
         "should mark capacitor as destroyed"
       );
-      t.type(
-        capacitor2Stream2.error,
-        Error,
-        "should store an error on attached read streams"
-      );
       t.strictSame(
         capacitor2Stream2.destroyed,
         true,
         "should mark attached read streams as destroyed"
-      );
-      t.strictSame(
-        capacitor2Stream1.error,
-        null,
-        "should not store an error on detached read streams"
       );
     });
   });
