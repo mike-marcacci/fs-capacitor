@@ -2,7 +2,7 @@ import crypto from "crypto";
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { Readable, Writable } from "stream";
+import { Readable, Writable } from "readable-stream";
 
 export class ReadAfterDestroyedError extends Error {}
 

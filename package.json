@@ -57,5 +57,8 @@
     "test:mjs": "if-ver -lt 12 || exit 0; node --experimental-modules --no-warnings lib/test | tap-mocha-reporter classic",
     "test:js": "node lib/test | tap-mocha-reporter classic",
     "prepublishOnly": "npm test"
+  },
+  "dependencies": {
+    "readable-stream": "^3.4.0"
   }
 }
