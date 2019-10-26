@@ -145,7 +145,7 @@ export class WriteStream extends Writable {
     }
 
     // Wait until all read streams have terminated before destroying this.
-    this._destroyPending = er => {
+    this._destroyPending = () => {
       process.removeListener("exit", this._cleanupSync);
       process.removeListener("SIGINT", this._cleanupSync);
 
@@ -159,18 +159,14 @@ export class WriteStream extends Writable {
         });
       };
 
-      if (typeof this.fd === "number") {
+      if (typeof this.fd === "number")
         fs.close(this.fd, closeError => {
           // An error here probably means the fd was already closed, but we can
           // still try to unlink the file.
 
           unlink(closeError || error);
         });
-
-        return;
-      } else callback(error);
-
-      unlink(er);
+      else callback(error);
     };
 
     // All read streams have terminated, so we can destroy this.
