@@ -10,14 +10,10 @@ export class ReadStream extends Readable {
   constructor(writeStream, name) {
     super({ autoDestroy: true });
 
-    this.name = name;
-    this.pos = 0;
-
+    this._pos = 0;
     this._writeStream = writeStream;
-  }
 
-  get ended() {
-    return this._readableState.ended;
+    this.name = name;
   }
 
   _read(n) {
@@ -29,22 +25,28 @@ export class ReadStream extends Readable {
     }
 
     let buf = Buffer.allocUnsafe(n);
-    fs.read(this._writeStream.fd, buf, 0, n, this.pos, (er, bytesRead) => {
-      if (er) this.destroy(er);
-      else if (bytesRead) {
-        this.pos += bytesRead;
-        this.push(buf.slice(0, bytesRead));
-      } else if (this._writeStream.finished) this.push(null);
-      else {
-        const retry = () => {
-          this._writeStream.removeListener("finish", retry);
-          this._writeStream.removeListener("write", retry);
-          this._read(n);
-        };
+    fs.read(this._writeStream.fd, buf, 0, n, this._pos, (error, bytesRead) => {
+      if (error) this.destroy(error);
 
-        this._writeStream.addListener("finish", retry);
-        this._writeStream.addListener("write", retry);
+      if (bytesRead) {
+        this._pos += bytesRead;
+        this.push(buf.slice(0, bytesRead));
+        return;
       }
+
+      if (this._writeStream._writableState.finished) {
+        this.push(null);
+        return;
+      }
+
+      const retry = () => {
+        this._writeStream.removeListener("finish", retry);
+        this._writeStream.removeListener("write", retry);
+        this._read(n);
+      };
+
+      this._writeStream.addListener("finish", retry);
+      this._writeStream.addListener("write", retry);
     });
   }
 }
@@ -53,11 +55,8 @@ export class WriteStream extends Writable {
   constructor() {
     super({ autoDestroy: false });
 
+    this._pos = 0;
     this._readStreams = new Set();
-
-    this.bytesWritten = 0;
-    this.pos = 0;
-    this.closed = false;
 
     this._cleanupSync = () => {
       process.removeListener("exit", this._cleanupSync);
@@ -109,10 +108,6 @@ export class WriteStream extends Writable {
     });
   }
 
-  get finished() {
-    return this._writableState.finished;
-  }
-
   _final(callback) {
     if (typeof this.fd !== "number") {
       this.once("open", () => this._final(callback));
@@ -126,16 +121,16 @@ export class WriteStream extends Writable {
       this.once("open", () => this._write(chunk, encoding, callback));
       return;
     }
-    fs.write(this.fd, chunk, 0, chunk.length, this.pos, er => {
-      if (er) {
-        callback(er);
+    fs.write(this.fd, chunk, 0, chunk.length, this._pos, error => {
+      if (error) {
+        callback(error);
         return;
       }
-      this.bytesWritten += chunk.length;
+
+      this._pos += chunk.length;
       this.emit("write");
       callback();
     });
-    this.pos += chunk.length;
   }
 
   _destroy(error, callback) {
@@ -154,7 +149,6 @@ export class WriteStream extends Writable {
           // If we are unable to unlink the file, the operating system will
           // clean up on next restart, since we use store thes in `os.tmpdir()`
           this.fd = null;
-          this.closed = true;
           callback(unlinkError || error);
         });
       };

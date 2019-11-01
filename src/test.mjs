@@ -22,7 +22,7 @@ const streamToString = stream =>
   });
 
 const waitForBytesWritten = (stream, bytes, resolve) => {
-  if (stream.bytesWritten >= bytes) {
+  if (stream._pos >= bytes) {
     setImmediate(resolve);
     return;
   }
@@ -162,11 +162,13 @@ const withChunkSize = size =>
 
     // Create a new capacitor and read stream before any data has been written
     let capacitor1;
+    let capacitor1Closed = false;
     let capacitor1Stream1;
     await t.test(
       "can add a read stream before any data has been written",
       async t => {
         capacitor1 = new WriteStream();
+        capacitor1.on("close", () => (capacitor1Closed = true));
         t.strictSame(
           capacitor1._readStreams.size,
           0,
@@ -221,7 +223,7 @@ const withChunkSize = size =>
 
     const writeEventBytesWritten = new Promise(resolve => {
       capacitor1.once("write", () => {
-        resolve(capacitor1.bytesWritten);
+        resolve(capacitor1._pos);
       });
     });
 
@@ -267,7 +269,7 @@ const withChunkSize = size =>
     await t.test("streams complete data to a read stream", async t => {
       const result2 = await streamToString(capacitor1Stream2);
       t.strictSame(
-        capacitor1Stream2.ended,
+        capacitor1Stream2._readableState.ended,
         true,
         "should mark read stream as ended"
       );
@@ -275,7 +277,7 @@ const withChunkSize = size =>
 
       const result4 = await streamToString(capacitor1Stream4);
       t.strictSame(
-        capacitor1Stream4.ended,
+        capacitor1Stream4._readableState.ended,
         true,
         "should mark read stream as ended"
       );
@@ -311,7 +313,7 @@ const withChunkSize = size =>
       capacitor1.destroy(null);
 
       t.strictSame(
-        capacitor1.closed,
+        capacitor1Closed,
         false,
         "should not destroy while read streams exist"
       );
@@ -340,7 +342,7 @@ const withChunkSize = size =>
         "should detach a destroyed read stream"
       );
       await capacitorDestroyed;
-      t.strictSame(capacitor1.closed, true, "should mark capacitor as closed");
+      t.strictSame(capacitor1Closed, true, "should mark capacitor as closed");
       t.strictSame(capacitor1.fd, null, "should set fd to null");
       t.strictSame(
         capacitor1.destroyed,
