@@ -153,7 +153,7 @@ t.test("Data from an open stream, 1 chunk, 1 read stream.", async t => {
   );
 });
 
-const withChunkSize = size =>
+const withChunkSize = size => {
   t.test(`--- with chunk size: ${size}`, async t => {
     let data = "";
     const source = new stream.Readable({
@@ -308,16 +308,16 @@ const withChunkSize = size =>
       );
     });
 
-    // Destroy the capacitor (without an error)
+    // Release the capacitor
     t.test("can delay destruction of a capacitor", t => {
-      capacitor1.destroy(null);
+      capacitor1.release();
 
       t.strictSame(
         capacitor1Closed,
         false,
         "should not destroy while read streams exist"
       );
-      t.true(capacitor1._destroyPending, "should mark for future destruction");
+      t.true(capacitor1._released, "should mark for future destruction");
       t.end();
     });
 
@@ -365,6 +365,7 @@ const withChunkSize = size =>
       }
     });
 
+    // Destroy with error.
     const capacitor2 = new WriteStream();
     const capacitor2Stream1 = capacitor2.createReadStream("capacitor2Stream1");
     const capacitor2Stream2 = capacitor2.createReadStream("capacitor2Stream2");
@@ -380,9 +381,16 @@ const withChunkSize = size =>
     await capacitor2ReadStream1Destroyed;
 
     await t.test("propagates errors to attached read streams", async t => {
-      capacitor2Stream2.on("error", () => {});
-      capacitor2.on("error", () => {});
-      capacitor2.destroy(new Error("test"));
+      const error = new Error("test");
+      let capacitor2Stream2Error;
+      capacitor2Stream2.on("error", error => {
+        capacitor2Stream2Error = error;
+      });
+      let capacitor2Error;
+      capacitor2.on("error", error => {
+        capacitor2Error = error;
+      });
+      capacitor2.destroy(error);
       await capacitor2Destroyed;
 
       t.strictSame(
@@ -395,8 +403,68 @@ const withChunkSize = size =>
         true,
         "should mark attached read streams as destroyed"
       );
+      t.strictSame(
+        capacitor2Stream2Error,
+        error,
+        "should emit the original error on read stream"
+      );
+      t.strictSame(
+        capacitor2Error,
+        error,
+        "should emit the original error on write stream"
+      );
+    });
+
+    // Destroy without error.
+    const capacitor3 = new WriteStream();
+    const capacitor3Stream1 = capacitor3.createReadStream("capacitor3Stream1");
+    const capacitor3Stream2 = capacitor3.createReadStream("capacitor3Stream2");
+
+    const capacitor3ReadStream1Destroyed = new Promise(resolve =>
+      capacitor3Stream1.on("close", resolve)
+    );
+    const capacitor3Destroyed = new Promise(resolve =>
+      capacitor3.on("close", resolve)
+    );
+
+    capacitor3Stream1.destroy();
+    await capacitor3ReadStream1Destroyed;
+
+    await t.test("propagates errors to attached read streams", async t => {
+      let capacitor3Stream2Error;
+      capacitor3Stream2.on("error", error => {
+        capacitor3Stream2Error = error;
+      });
+      let capacitor3Error;
+      capacitor3.on("error", error => {
+        capacitor3Error = error;
+      });
+      capacitor3.destroy();
+      await capacitor3Destroyed;
+
+      t.strictSame(
+        capacitor3.destroyed,
+        true,
+        "should mark capacitor as destroyed"
+      );
+      t.strictSame(
+        capacitor3Stream2.destroyed,
+        true,
+        "should mark attached read streams as destroyed"
+      );
+      t.strictSame(
+        capacitor3Stream2Error,
+        undefined,
+        "should not emit an error on read stream"
+      );
+      t.strictSame(
+        capacitor3Error,
+        undefined,
+        "should not emit am error on write stream"
+      );
     });
   });
+};
 
 // Test with small (sub-highWaterMark, 16384) chunks
 withChunkSize(10);

@@ -29,6 +29,7 @@ function checkSignalListeners() {
 }
 
 export class ReadAfterDestroyedError extends Error {}
+export class ReadAfterReleasedError extends Error {}
 
 export class ReadStream extends Readable {
   constructor(writeStream, name) {
@@ -171,40 +172,33 @@ export class WriteStream extends Writable {
     });
   }
 
+  release() {
+    this._released = true;
+    if (this._readStreams.size === 0) this.destroy();
+  }
+
   _destroy(error, callback) {
     if (typeof this._fd !== "number") {
       this.once("ready", () => this._destroy(error, callback));
       return;
     }
 
-    // Wait until all read streams have terminated before destroying this.
-    this._destroyPending = () => {
-      process.removeListener("exit", this._cleanupSync);
+    process.removeListener("exit", this._cleanupSync);
 
-      const unlink = error => {
-        fs.unlink(this._path, unlinkError => {
-          // If we are unable to unlink the file, the operating system will
-          // clean up on next restart, since we use store thes in `os.tmpdir()`
-          this._fd = null;
-          callback(unlinkError || error);
-        });
-      };
+    // Close the file descriptor.
+    fs.close(this._fd, closeError => {
+      // An error here probably means the fd was already closed, but we can
+      // still try to unlink the file.
+      fs.unlink(this._path, unlinkError => {
+        // If we are unable to unlink the file, the operating system will
+        // clean up on next restart, since we use store thes in `os.tmpdir()`
+        this._fd = null;
+        callback(unlinkError || closeError || error);
+      });
+    });
 
-      if (typeof this._fd === "number")
-        fs.close(this._fd, closeError => {
-          // An error here probably means the fd was already closed, but we can
-          // still try to unlink the file.
-
-          unlink(closeError || error);
-        });
-      else callback(error);
-    };
-
-    // All read streams have terminated, so we can destroy this.
-    if (this._readStreams.size === 0) this._destroyPending();
-    else if (error)
-      // If there is an error, destroy all read streams with the error.
-      for (let readStream of this._readStreams) readStream.destroy(error);
+    // Destroy all attached read streams.
+    for (let readStream of this._readStreams) readStream.destroy(error);
   }
 
   createReadStream(name) {
@@ -213,14 +207,18 @@ export class WriteStream extends Writable {
         "A ReadStream cannot be created from a destroyed WriteStream."
       );
 
+    if (this.released)
+      throw new ReadAfterReleasedError(
+        "A ReadStream cannot be created from a released WriteStream."
+      );
+
     const readStream = new ReadStream(this, name);
     this._readStreams.add(readStream);
 
     const remove = () => {
       this._readStreams.delete(readStream);
 
-      if (this._destroyPending && this._readStreams.size === 0)
-        this._destroyPending();
+      if (this._released && this._readStreams.size === 0) this.destroy();
 
       readStream.removeListener("end", remove);
       readStream.removeListener("close", remove);

@@ -69,14 +69,19 @@ Create a new `WriteStream` instance.
 
 Create a new `ReadStream` instance attached to the `WriteStream` instance.
 
-Once a `WriteStream` is fully destroyed, calling `.createReadStream()` will throw a `ReadAfterDestroyedError` error.
+Calling `.createReadStream()` on a released `WriteStream` will throw a `ReadAfterReleasedError` error.
+
+Calling `.createReadStream()` on a destroyed `WriteStream` will throw a `ReadAfterDestroyedError` error.
 
 As soon as a `ReadStream` ends or is closed (such as by calling `readStream.destroy()`), it is detached from its `WriteStream`.
 
+#### `.release(): void`
+
+Release the `WriteStream`'s claim on the underlying resources. Once called, destruction of underlying resources is performed as soon as all attached `ReadStream`s are removed.
+
 #### `.destroy(error?: ?Error): void`
 
-- If `error` is present, `WriteStream`s still attached are destroyed with the same error.
-- If `error` is null or undefined, destruction of underlying resources is delayed until no `ReadStream`s are attached the `WriteStream` instance.
+Destroy the `WriteStream` and all attached `ReadStream`s. If `error` is present, attached `ReadStream`s are destroyed with the same error.
 
 ### ReadStream
 
