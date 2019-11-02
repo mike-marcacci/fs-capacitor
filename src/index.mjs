@@ -119,7 +119,7 @@ export class WriteStream extends Writable {
       );
 
       // Create a file in the OS's temporary files directory.
-      fs.open(this.path, "wx+", this.mode, (error, fd) => {
+      fs.open(this.path, "wx+", 0o600, (error, fd) => {
         if (error) {
           this.destroy(error);
           return;
