@@ -37,7 +37,7 @@ export class ReadStream extends Readable {
     super();
     this._writeStream = writeStream;
     this.name = name;
-    this.on("end", this._autoDestroy);
+    this.addListener("end", this._autoDestroy);
   }
 
   _read(n: number): void {
@@ -77,13 +77,13 @@ export class ReadStream extends Readable {
 
         // Otherwise, wait for the write stream to add more data or finish.
         const retry = (): void => {
-          this._writeStream.off("finish", retry);
-          this._writeStream.off("write", retry);
+          this._writeStream.removeListener("finish", retry);
+          this._writeStream.removeListener("write", retry);
           this._read(n);
         };
 
-        this._writeStream.on("finish", retry);
-        this._writeStream.on("write", retry);
+        this._writeStream.addListener("finish", retry);
+        this._writeStream.addListener("write", retry);
       }
     );
   }
@@ -126,7 +126,7 @@ export class WriteStream extends Writable {
         }
 
         // Cleanup when the process exits or is killed.
-        process.on("exit", this._cleanupSync);
+        process.addListener("exit", this._cleanupSync);
 
         this._fd = fd;
         this.emit("ready");
@@ -135,7 +135,7 @@ export class WriteStream extends Writable {
   }
 
   _cleanupSync = (): void => {
-    process.off("exit", this._cleanupSync);
+    process.removeListener("exit", this._cleanupSync);
 
     if (typeof this._fd === "number")
       try {
@@ -217,7 +217,7 @@ export class WriteStream extends Writable {
 
         // We avoid removing this until now in case an exit occurs while
         // asyncronously cleaning up.
-        process.off("exit", this._cleanupSync);
+        process.removeListener("exit", this._cleanupSync);
         callback(unlinkError || closeError || error);
       });
     });
@@ -242,7 +242,7 @@ export class WriteStream extends Writable {
     this._readStreams.add(readStream);
 
     const remove = (): void => {
-      readStream.off("close", remove);
+      readStream.removeListener("close", remove);
       this._readStreams.delete(readStream);
 
       if (this._released && this._readStreams.size === 0) {
@@ -250,7 +250,7 @@ export class WriteStream extends Writable {
       }
     };
 
-    readStream.on("close", remove);
+    readStream.addListener("close", remove);
 
     return readStream;
   }
