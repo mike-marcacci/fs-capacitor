@@ -20,7 +20,7 @@ export class ReadStream extends Readable {
     if (this.destroyed) return;
 
     if (typeof this._writeStream.fd !== "number") {
-      this._writeStream.once("open", () => this._read(n));
+      this._writeStream.once("ready", () => this._read(n));
       return;
     }
 
@@ -109,7 +109,6 @@ export class WriteStream extends Writable {
         process.addListener("SIGINT", this._cleanupSync);
 
         this.fd = fd;
-        this.emit("open", fd);
         this.emit("ready");
       });
     });
@@ -117,7 +116,7 @@ export class WriteStream extends Writable {
 
   _final(callback) {
     if (typeof this.fd !== "number") {
-      this.once("open", () => this._final(callback));
+      this.once("ready", () => this._final(callback));
       return;
     }
     callback();
@@ -125,7 +124,7 @@ export class WriteStream extends Writable {
 
   _write(chunk, encoding, callback) {
     if (typeof this.fd !== "number") {
-      this.once("open", () => this._write(chunk, encoding, callback));
+      this.once("ready", () => this._write(chunk, encoding, callback));
       return;
     }
 
@@ -150,7 +149,7 @@ export class WriteStream extends Writable {
 
   _destroy(error, callback) {
     if (typeof this.fd !== "number") {
-      this.once("open", () => this._destroy(error, callback));
+      this.once("ready", () => this._destroy(error, callback));
       return;
     }
 

@@ -183,7 +183,7 @@ const withChunkSize = size =>
 
         await t.test("creates a temporary file", async t => {
           t.plan(3);
-          await new Promise(resolve => capacitor1.on("open", resolve));
+          await new Promise(resolve => capacitor1.on("ready", resolve));
           t.type(
             capacitor1.path,
             "string",
