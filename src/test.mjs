@@ -185,12 +185,12 @@ const withChunkSize = size =>
           t.plan(3);
           await new Promise(resolve => capacitor1.on("ready", resolve));
           t.type(
-            capacitor1.path,
+            capacitor1._path,
             "string",
-            "capacitor1.path should be a string"
+            "capacitor1._path should be a string"
           );
-          t.type(capacitor1.fd, "number", "capacitor1.fd should be a number");
-          t.ok(fs.existsSync(capacitor1.path), "creates a temp file");
+          t.type(capacitor1._fd, "number", "capacitor1._fd should be a number");
+          t.ok(fs.existsSync(capacitor1._path), "creates a temp file");
         });
       }
     );
@@ -343,13 +343,13 @@ const withChunkSize = size =>
       );
       await capacitorDestroyed;
       t.strictSame(capacitor1Closed, true, "should mark capacitor as closed");
-      t.strictSame(capacitor1.fd, null, "should set fd to null");
+      t.strictSame(capacitor1._fd, null, "should set fd to null");
       t.strictSame(
         capacitor1.destroyed,
         true,
         "should mark capacitor as destroyed"
       );
-      t.notOk(fs.existsSync(capacitor1.path), "removes its temp file");
+      t.notOk(fs.existsSync(capacitor1._path), "removes its temp file");
     });
 
     // Try to create a new read stream

@@ -39,7 +39,7 @@ export class ReadStream extends Readable {
   _read(n) {
     if (this.destroyed) return;
 
-    if (typeof this._writeStream.fd !== "number") {
+    if (typeof this._writeStream._fd !== "number") {
       this._writeStream.once("ready", () => this._read(n));
       return;
     }
@@ -48,7 +48,7 @@ export class ReadStream extends Readable {
     // `bytesRead`, and discard the rest. This prevents node from having to zero
     // out the enture allocation first.
     let buf = Buffer.allocUnsafe(n);
-    fs.read(this._writeStream.fd, buf, 0, n, this._pos, (error, bytesRead) => {
+    fs.read(this._writeStream._fd, buf, 0, n, this._pos, (error, bytesRead) => {
       if (error) this.destroy(error);
 
       // Push any read bytes into the local stream buffer.
@@ -90,16 +90,16 @@ export class WriteStream extends Writable {
     this._cleanupSync = () => {
       process.removeListener("exit", this._cleanupSync);
 
-      if (typeof this.fd === "number")
+      if (typeof this._fd === "number")
         try {
-          fs.closeSync(this.fd);
+          fs.closeSync(this._fd);
         } catch (error) {
           // An error here probably means the fd was already closed, but we can
           // still try to unlink the file.
         }
 
       try {
-        fs.unlinkSync(this.path);
+        fs.unlinkSync(this._path);
       } catch (error) {
         // If we are unable to unlink the file, the operating system will clean
         // up on next restart, since we use store thes in `os.tmpdir()`
@@ -113,13 +113,13 @@ export class WriteStream extends Writable {
         return;
       }
 
-      this.path = path.join(
+      this._path = path.join(
         os.tmpdir(),
         `capacitor-${buffer.toString("hex")}.tmp`
       );
 
       // Create a file in the OS's temporary files directory.
-      fs.open(this.path, "wx+", 0o600, (error, fd) => {
+      fs.open(this._path, "wx+", 0o600, (error, fd) => {
         if (error) {
           this.destroy(error);
           return;
@@ -128,14 +128,14 @@ export class WriteStream extends Writable {
         // Cleanup when the process exits or is killed.
         process.addListener("exit", this._cleanupSync);
 
-        this.fd = fd;
+        this._fd = fd;
         this.emit("ready");
       });
     });
   }
 
   _final(callback) {
-    if (typeof this.fd !== "number") {
+    if (typeof this._fd !== "number") {
       this.once("ready", () => this._final(callback));
       return;
     }
@@ -143,12 +143,12 @@ export class WriteStream extends Writable {
   }
 
   _write(chunk, encoding, callback) {
-    if (typeof this.fd !== "number") {
+    if (typeof this._fd !== "number") {
       this.once("ready", () => this._write(chunk, encoding, callback));
       return;
     }
 
-    fs.write(this.fd, chunk, 0, chunk.length, this._pos, error => {
+    fs.write(this._fd, chunk, 0, chunk.length, this._pos, error => {
       if (error) {
         callback(error);
         return;
@@ -168,7 +168,7 @@ export class WriteStream extends Writable {
   }
 
   _destroy(error, callback) {
-    if (typeof this.fd !== "number") {
+    if (typeof this._fd !== "number") {
       this.once("ready", () => this._destroy(error, callback));
       return;
     }
@@ -178,16 +178,16 @@ export class WriteStream extends Writable {
       process.removeListener("exit", this._cleanupSync);
 
       const unlink = error => {
-        fs.unlink(this.path, unlinkError => {
+        fs.unlink(this._path, unlinkError => {
           // If we are unable to unlink the file, the operating system will
           // clean up on next restart, since we use store thes in `os.tmpdir()`
-          this.fd = null;
+          this._fd = null;
           callback(unlinkError || error);
         });
       };
 
-      if (typeof this.fd === "number")
-        fs.close(this.fd, closeError => {
+      if (typeof this._fd === "number")
+        fs.close(this._fd, closeError => {
           // An error here probably means the fd was already closed, but we can
           // still try to unlink the file.
 
