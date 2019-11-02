@@ -24,21 +24,28 @@ export class ReadStream extends Readable {
       return;
     }
 
+    // Using `allocUnsafe` here is OK because we return a slice the length of
+    // `bytesRead`, and discard the rest. This prevents node from having to zero
+    // out the enture allocation first.
     let buf = Buffer.allocUnsafe(n);
     fs.read(this._writeStream.fd, buf, 0, n, this._pos, (error, bytesRead) => {
       if (error) this.destroy(error);
 
+      // Push any read bytes into the local stream buffer.
       if (bytesRead) {
         this._pos += bytesRead;
         this.push(buf.slice(0, bytesRead));
         return;
       }
 
+      // If there were no more bytes to read and the write stream is finished,
+      // than this stream has reached the end.
       if (this._writeStream._writableState.finished) {
         this.push(null);
         return;
       }
 
+      // Otherwise, wait for the write stream to add more data or finish.
       const retry = () => {
         this._writeStream.removeListener("finish", retry);
         this._writeStream.removeListener("write", retry);
@@ -73,12 +80,12 @@ export class WriteStream extends Writable {
       try {
         fs.unlinkSync(this.path);
       } catch (error) {
-        // If we are unable to unlink the file, the operating system will clean up
-        //  on next restart, since we use store thes in `os.tmpdir()`
+        // If we are unable to unlink the file, the operating system will clean
+        // up on next restart, since we use store thes in `os.tmpdir()`
       }
     };
 
-    // generage a random tmp path
+    // Generate a random filename.
     crypto.randomBytes(16, (error, buffer) => {
       if (error) {
         this.destroy(error);
@@ -90,14 +97,14 @@ export class WriteStream extends Writable {
         `capacitor-${buffer.toString("hex")}.tmp`
       );
 
-      // create the file
+      // Create a file in the OS's temporary files directory.
       fs.open(this.path, "wx+", this.mode, (error, fd) => {
         if (error) {
           this.destroy(error);
           return;
         }
 
-        // cleanup when our stream closes or when the process exits
+        // Cleanup when our stream closes or when the process exits.
         process.addListener("exit", this._cleanupSync);
         process.addListener("SIGINT", this._cleanupSync);
 
@@ -121,12 +128,20 @@ export class WriteStream extends Writable {
       this.once("open", () => this._write(chunk, encoding, callback));
       return;
     }
+
     fs.write(this.fd, chunk, 0, chunk.length, this._pos, error => {
       if (error) {
         callback(error);
         return;
       }
 
+      // It's safe to increment `this._pos` after flushing to the filesystem
+      // because node streams ensure that only one `_write()` is active at a
+      // time. If this assumption is broken, the behavior of this library is
+      // undefined, regardless of where this is incremented. Relocating this
+      // to increment syncronously would result in correct file contents, but
+      // the out-of-order writes would still open the potential for read streams
+      // to scan positions that have not yet been written.
       this._pos += chunk.length;
       this.emit("write");
       callback();
