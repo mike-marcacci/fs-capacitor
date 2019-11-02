@@ -18,48 +18,35 @@
     "clone"
   ],
   "files": [
-    "lib",
-    "!lib/test.*"
+    "dist",
+    "!dist/*.test.*"
   ],
-  "main": "lib",
+  "main": "dist",
   "engines": {
     "node": ">=8.5"
   },
   "browserslist": "node >= 8.5",
   "devDependencies": {
-    "@babel/cli": "^7.1.2",
-    "@babel/core": "^7.3.3",
-    "@babel/preset-env": "^7.4.4",
-    "babel-eslint": "^10.0.1",
-    "eslint": "^6.6.0",
-    "eslint-config-env": "^10.0.0",
-    "eslint-config-prettier": "^6.5.0",
-    "eslint-plugin-import": "^2.16.0",
-    "eslint-plugin-import-order-alphabetical": "^1.0.0",
-    "eslint-plugin-jsdoc": "^17.0.0",
-    "eslint-plugin-node": "^10.0.0",
-    "eslint-plugin-prettier": "^3.0.0",
-    "husky": "^3.0.9",
-    "if-ver": "^1.1.0",
-    "leaked-handles": "^5.2.0",
-    "lint-staged": "^9.4.2",
-    "prettier": "^1.16.4",
-    "tap": "^14.9.1"
+    "@typescript-eslint/eslint-plugin": "^2.3.2",
+    "@typescript-eslint/parser": "^2.3.2",
+    "ava": "^2.4.0",
+    "eslint": "^6.5.1",
+    "eslint-config-prettier": "^6.3.0",
+    "eslint-plugin-prettier": "^3.1.1",
+    "nodemon": "^1.19.3",
+    "prettier": "^1.18.2",
+    "typescript": "^3.6.3"
   },
   "scripts": {
-    "prepare": "npm run prepare:clean && npm run prepare:mjs && npm run prepare:js && npm run prepare:prettier",
-    "prepare:clean": "rm -rf lib",
-    "prepare:mjs": "BABEL_ESM=1 babel src -d lib --keep-file-extension",
-    "prepare:js": "babel src -d lib",
-    "prepare:prettier": "prettier 'lib/**/*.{mjs,js}' --write",
-    "test": "npm run test:eslint && npm run test:prettier && npm run test:mjs && npm run test:js",
-    "test:eslint": "eslint . --ext mjs,js",
-    "test:prettier": "prettier '**/*.{json,yml,md}' -l",
-    "test:mjs": "if-ver -lt 12 || exit 0; node --experimental-modules --no-warnings lib/test | tap-mocha-reporter classic",
-    "test:js": "node lib/test | tap-mocha-reporter classic",
-    "prepublishOnly": "npm test"
+    "format": "prettier --list-different --write '**/*.{json,yml,md,ts}'",
+    "lint": "prettier -c '**/*.{json,yml,md,ts}' && eslint src --ext ts",
+    "build": "rm -rf dist && tsc",
+    "build:development": "rm -rf dist && tsc --watch",
+    "test": "ava --verbose dist/*.test.js",
+    "test:development": "ava --verbose --watch dist/*.test.js"
   },
   "dependencies": {
+    "@types/readable-stream": "^2.3.5",
     "readable-stream": "^3.4.0"
   }
 }

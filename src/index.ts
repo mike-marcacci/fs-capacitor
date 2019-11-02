@@ -2,16 +2,9 @@ import crypto from "crypto";
 import fs from "fs";
 import os from "os";
 import path from "path";
-import rs from "readable-stream";
+import { Readable, Writable } from "readable-stream";
 
-// Because we target .mjs files and this dependency is commonjs, we can't use
-// named exports. Instead, we'll just destructure the object.
-const { Readable, Writable } = rs;
-
-let haveCheckedSignalListeners = false;
-function checkSignalListeners() {
-  haveCheckedSignalListeners = true;
-
+function checkSignalListeners(): void {
   if (!process.listeners("SIGINT").length)
     process.emitWarning(
       "There are no listeners for SIGINT. If your application receives a SIGINT signal, it is possible that some temporary files will not be cleaned up. Please see https://github.com/mike-marcacci/fs-capacitor#ensuring-cleanup-on-termination-by-process-signal"
@@ -32,19 +25,25 @@ export class ReadAfterDestroyedError extends Error {}
 export class ReadAfterReleasedError extends Error {}
 
 export class ReadStream extends Readable {
-  constructor(writeStream, name) {
-    super({ autoDestroy: true });
+  private _autoDestroy = (): void => {
+    this.destroy();
+  };
+  private _pos: number = 0;
+  private _writeStream: WriteStream;
 
-    this._pos = 0;
+  name: undefined | string;
+
+  constructor(writeStream: WriteStream, name?: string) {
+    super();
     this._writeStream = writeStream;
-
     this.name = name;
+    this.on("end", this._autoDestroy);
   }
 
-  _read(n) {
+  _read(n: number): void {
     if (this.destroyed) return;
 
-    if (typeof this._writeStream._fd !== "number") {
+    if (typeof this._writeStream["_fd"] !== "number") {
       this._writeStream.once("ready", () => this._read(n));
       return;
     }
@@ -52,64 +51,60 @@ export class ReadStream extends Readable {
     // Using `allocUnsafe` here is OK because we return a slice the length of
     // `bytesRead`, and discard the rest. This prevents node from having to zero
     // out the enture allocation first.
-    let buf = Buffer.allocUnsafe(n);
-    fs.read(this._writeStream._fd, buf, 0, n, this._pos, (error, bytesRead) => {
-      if (error) this.destroy(error);
+    const buf = Buffer.allocUnsafe(n);
+    fs.read(
+      this._writeStream["_fd"],
+      buf,
+      0,
+      n,
+      this._pos,
+      (error, bytesRead) => {
+        if (error) this.destroy(error);
 
-      // Push any read bytes into the local stream buffer.
-      if (bytesRead) {
-        this._pos += bytesRead;
-        this.push(buf.slice(0, bytesRead));
-        return;
+        // Push any read bytes into the local stream buffer.
+        if (bytesRead) {
+          this._pos += bytesRead;
+          this.push(buf.slice(0, bytesRead));
+          return;
+        }
+
+        // If there were no more bytes to read and the write stream is finished,
+        // than this stream has reached the end.
+        if (this._writeStream._writableState.finished) {
+          this.push(null);
+          return;
+        }
+
+        // Otherwise, wait for the write stream to add more data or finish.
+        const retry = (): void => {
+          this._writeStream.off("finish", retry);
+          this._writeStream.off("write", retry);
+          this._read(n);
+        };
+
+        this._writeStream.on("finish", retry);
+        this._writeStream.on("write", retry);
       }
-
-      // If there were no more bytes to read and the write stream is finished,
-      // than this stream has reached the end.
-      if (this._writeStream._writableState.finished) {
-        this.push(null);
-        return;
-      }
-
-      // Otherwise, wait for the write stream to add more data or finish.
-      const retry = () => {
-        this._writeStream.removeListener("finish", retry);
-        this._writeStream.removeListener("write", retry);
-        this._read(n);
-      };
-
-      this._writeStream.addListener("finish", retry);
-      this._writeStream.addListener("write", retry);
-    });
+    );
   }
 }
 
 export class WriteStream extends Writable {
+  private static _haveCheckedSignalListeners = false;
+  private _fd: null | number = null;
+  private _path: null | string = null;
+  private _pos: number = 0;
+  private _readStreams: Set<ReadStream> = new Set();
+  private _released: boolean = false;
+
   constructor() {
-    if (!haveCheckedSignalListeners) checkSignalListeners();
+    super();
 
-    super({ autoDestroy: false });
-
-    this._pos = 0;
-    this._readStreams = new Set();
-
-    this._cleanupSync = () => {
-      process.removeListener("exit", this._cleanupSync);
-
-      if (typeof this._fd === "number")
-        try {
-          fs.closeSync(this._fd);
-        } catch (error) {
-          // An error here probably means the fd was already closed, but we can
-          // still try to unlink the file.
-        }
-
-      try {
-        fs.unlinkSync(this._path);
-      } catch (error) {
-        // If we are unable to unlink the file, the operating system will clean
-        // up on next restart, since we use store thes in `os.tmpdir()`
-      }
-    };
+    // Only warn about missing signal listeners once.
+    if (!WriteStream._haveCheckedSignalListeners) {
+      WriteStream._haveCheckedSignalListeners = true;
+      checkSignalListeners();
+    }
 
     // Generate a random filename.
     crypto.randomBytes(16, (error, buffer) => {
@@ -131,7 +126,7 @@ export class WriteStream extends Writable {
         }
 
         // Cleanup when the process exits or is killed.
-        process.addListener("exit", this._cleanupSync);
+        process.on("exit", this._cleanupSync);
 
         this._fd = fd;
         this.emit("ready");
@@ -139,7 +134,26 @@ export class WriteStream extends Writable {
     });
   }
 
-  _final(callback) {
+  _cleanupSync = (): void => {
+    process.off("exit", this._cleanupSync);
+
+    if (typeof this._fd === "number")
+      try {
+        fs.closeSync(this._fd);
+      } catch (error) {
+        // An error here probably means the fd was already closed, but we can
+        // still try to unlink the file.
+      }
+
+    try {
+      if (this._path) fs.unlinkSync(this._path);
+    } catch (error) {
+      // If we are unable to unlink the file, the operating system will clean
+      // up on next restart, since we use store thes in `os.tmpdir()`
+    }
+  };
+
+  _final(callback: (error?: null | Error) => any): void {
     if (typeof this._fd !== "number") {
       this.once("ready", () => this._final(callback));
       return;
@@ -147,7 +161,11 @@ export class WriteStream extends Writable {
     callback();
   }
 
-  _write(chunk, encoding, callback) {
+  _write(
+    chunk: Buffer,
+    encoding: string,
+    callback: (error?: null | Error) => any
+  ): void {
     if (typeof this._fd !== "number") {
       this.once("ready", () => this._write(chunk, encoding, callback));
       return;
@@ -172,42 +190,50 @@ export class WriteStream extends Writable {
     });
   }
 
-  release() {
+  release(): void {
     this._released = true;
     if (this._readStreams.size === 0) this.destroy();
   }
 
-  _destroy(error, callback) {
-    if (typeof this._fd !== "number") {
+  _destroy(
+    error: undefined | null | Error,
+    callback: (error?: null | Error) => any
+  ): void {
+    const fd = this._fd;
+    const path = this._path;
+    if (typeof fd !== "number" || typeof path !== "string") {
       this.once("ready", () => this._destroy(error, callback));
       return;
     }
 
-    process.removeListener("exit", this._cleanupSync);
-
     // Close the file descriptor.
-    fs.close(this._fd, closeError => {
+    fs.close(fd, closeError => {
       // An error here probably means the fd was already closed, but we can
       // still try to unlink the file.
-      fs.unlink(this._path, unlinkError => {
+      fs.unlink(path, unlinkError => {
         // If we are unable to unlink the file, the operating system will
         // clean up on next restart, since we use store thes in `os.tmpdir()`
         this._fd = null;
+
+        // We avoid removing this until now in case an exit occurs while
+        // asyncronously cleaning up.
+        process.off("exit", this._cleanupSync);
         callback(unlinkError || closeError || error);
       });
     });
 
     // Destroy all attached read streams.
-    for (let readStream of this._readStreams) readStream.destroy(error);
+    for (const readStream of this._readStreams)
+      readStream.destroy(error || undefined);
   }
 
-  createReadStream(name) {
+  createReadStream(name?: string): ReadStream {
     if (this.destroyed)
       throw new ReadAfterDestroyedError(
         "A ReadStream cannot be created from a destroyed WriteStream."
       );
 
-    if (this.released)
+    if (this._released)
       throw new ReadAfterReleasedError(
         "A ReadStream cannot be created from a released WriteStream."
       );
@@ -215,17 +241,16 @@ export class WriteStream extends Writable {
     const readStream = new ReadStream(this, name);
     this._readStreams.add(readStream);
 
-    const remove = () => {
+    const remove = (): void => {
+      readStream.off("close", remove);
       this._readStreams.delete(readStream);
 
-      if (this._released && this._readStreams.size === 0) this.destroy();
-
-      readStream.removeListener("end", remove);
-      readStream.removeListener("close", remove);
+      if (this._released && this._readStreams.size === 0) {
+        this.destroy();
+      }
     };
 
-    readStream.addListener("end", remove);
-    readStream.addListener("close", remove);
+    readStream.on("close", remove);
 
     return readStream;
   }

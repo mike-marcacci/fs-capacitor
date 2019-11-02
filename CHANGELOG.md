@@ -49,3 +49,9 @@
 - Specify `0o600` for buffer file permissions instead of node's default `0o666`
 - **BREAKING:** Remove several undocumented properties that existed for consistency with the extended classes.
 - **BREAKING:** No longer listen for `SIGINT`, and instead warn the application to add handlers for terminating signals.
+
+## 4.0.0
+
+- Update source to typescript.
+- Add `WriteStream.release` replacing the functionality of an error-free `WriteStream.destroy()`
+- **BREAKING:** Change `WriteStream.destroy()` to immediately destroy attached `ReadStream`s even without an error.

@@ -5,4 +5,4 @@ node_js:
   - "12"
   - "node"
 notifications:
-  email: false
+  email: true
