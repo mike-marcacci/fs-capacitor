@@ -44,6 +44,7 @@
 
 ## 3.0.0
 
+- Updated dev dependencies.
 - Add support for Node.js v13 by no longer extending `ReadStream` and `WriteStream` from node's `fs` library.
 - Specify `0o600` for buffer file permissions instead of node's default `0o666`
 - **BREAKING:** Remove several undocumented properties that existed for consistency with the extended classes.
