@@ -1,7 +1,7 @@
 {
   "extends": ["env"],
   "rules": {
-    "require-jsdoc": "off"
+    "jsdoc/require-jsdoc": [0]
   },
   "settings": {
     "node": {

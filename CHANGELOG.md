@@ -41,3 +41,9 @@
 - Configure [`eslint-plugin-node`](https://npm.im/eslint-plugin-node) to resolve `.mjs` before `.js` and other extensions, for compatibility with the pre Node.js v12 `--experimental-modules` behavior.
 - Don't ESLint ignore `node_modules`, as it's already ignored by default.
 - Use the `classic` TAP reporter for tests as it has more compact output.
+
+## 3.0.0
+
+- Add support for Node.js v13 by no longer extending `ReadStream` and `WriteStream` from node's `fs` library.
+- **BREAKING:** Remove several undocumented properties that existed for consistency with the extended classes.
+- **BREAKING:** No longer listen for `SIGINT`, and instead warn the application to add handlers for terminating signals.

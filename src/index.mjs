@@ -4,6 +4,26 @@ import os from "os";
 import path from "path";
 import { Readable, Writable } from "readable-stream";
 
+let haveCheckedSignalListeners = false;
+function checkSignalListeners() {
+  haveCheckedSignalListeners = true;
+
+  if (!process.listeners("SIGINT").length)
+    process.emitWarning(
+      "There are no listeners for SIGINT. If your application receives a SIGINT signal, it is possible that some temporary files will not be cleaned up. Please see https://github.com/mike-marcacci/fs-capacitor#ensuring-cleanup-on-termination-by-process-signal"
+    );
+
+  if (!process.listeners("SIGTERM").length)
+    process.emitWarning(
+      "There are no listeners for SIGTERM. If your application receives a SIGTERM signal, it is possible that some temporary files will not be cleaned up. Please see https://github.com/mike-marcacci/fs-capacitor#ensuring-cleanup-on-termination-by-process-signal"
+    );
+
+  if (!process.listeners("SIGHUP").length)
+    process.emitWarning(
+      "There are no listeners for SIGHUP. If your application receives a SIGHUP signal, it is possible that some temporary files will not be cleaned up. Please see https://github.com/mike-marcacci/fs-capacitor#ensuring-cleanup-on-termination-by-process-signal"
+    );
+}
+
 export class ReadAfterDestroyedError extends Error {}
 
 export class ReadStream extends Readable {
@@ -60,6 +80,8 @@ export class ReadStream extends Readable {
 
 export class WriteStream extends Writable {
   constructor() {
+    if (!haveCheckedSignalListeners) checkSignalListeners();
+
     super({ autoDestroy: false });
 
     this._pos = 0;
@@ -67,7 +89,6 @@ export class WriteStream extends Writable {
 
     this._cleanupSync = () => {
       process.removeListener("exit", this._cleanupSync);
-      process.removeListener("SIGINT", this._cleanupSync);
 
       if (typeof this.fd === "number")
         try {
@@ -104,9 +125,8 @@ export class WriteStream extends Writable {
           return;
         }
 
-        // Cleanup when our stream closes or when the process exits.
+        // Cleanup when the process exits or is killed.
         process.addListener("exit", this._cleanupSync);
-        process.addListener("SIGINT", this._cleanupSync);
 
         this.fd = fd;
         this.emit("ready");
@@ -156,7 +176,6 @@ export class WriteStream extends Writable {
     // Wait until all read streams have terminated before destroying this.
     this._destroyPending = () => {
       process.removeListener("exit", this._cleanupSync);
-      process.removeListener("SIGINT", this._cleanupSync);
 
       const unlink = error => {
         fs.unlink(this.path, unlinkError => {

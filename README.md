@@ -39,10 +39,21 @@ It is especially important to use cases like [`graphql-upload`](https://github.c
 
 FS Capacitor creates its temporary files in the directory ideneified by `os.tmpdir()` and attempts to remove them:
 
-- after `readStream.destroy()` has been called and all read streams are fully consumed or destroyed
+- after `writeStream.destroy()` has been called and all read streams are fully consumed or destroyed
 - before the process exits
 
 Please do note that FS Capacitor does NOT release disk space _as data is consumed_, and therefore is not suitable for use with infinite streams or those larger than the filesystem.
+
+#### Ensuring cleanup on termination by process signal
+
+FS Capacitor cleans up all of its temporary files before the process exits, by listening to the [node process's `exit` event](https://nodejs.org/api/process.html#process_event_exit). This event, however, is only emitted when the process is about to exit as a result of either:
+
+- The process.exit() method being called explicitly;
+- The Node.js event loop no longer having any additional work to perform.
+
+When the node process receives a `SIGINT`, `SIGTERM`, or `SIGHUP` signal and there is no handler, it will exit without emitting the `exit` event.
+
+Beginning in version 3, fs-capacitor will NOT listen for these signals. Instead, the application should handle these signals according to its own logic and call `process.exit()` when it is ready to exit. This allows the application to implement its own graceful shutdown procedures, such as waiting for a stream to finish.
 
 ## API
 
