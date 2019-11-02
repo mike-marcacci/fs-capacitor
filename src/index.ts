@@ -256,4 +256,9 @@ export class WriteStream extends Writable {
   }
 }
 
-export default WriteStream;
+export default {
+  WriteStream,
+  ReadStream,
+  ReadAfterDestroyedError,
+  ReadAfterReleasedError
+};
