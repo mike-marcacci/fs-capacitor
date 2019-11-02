@@ -9,7 +9,7 @@ This is useful for file uploads and other situations where you want to avoid del
 ```js
 import fs from "fs";
 import http from "http";
-import WriteStream from "fs-capacitor";
+import { WriteStream } from "fs-capacitor";
 
 http.createServer((req, res) => {
   const capacitor = new WriteStream();

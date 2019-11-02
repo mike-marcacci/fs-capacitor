@@ -2,7 +2,11 @@ import crypto from "crypto";
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { Readable, Writable } from "readable-stream";
+import rs from "readable-stream";
+
+// Because we target .mjs files and this dependency is commonjs, we can't use
+// named exports. Instead, we'll just destructure the object.
+const { Readable, Writable } = rs;
 
 let haveCheckedSignalListeners = false;
 function checkSignalListeners() {
