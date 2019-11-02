@@ -18,10 +18,9 @@
     "clone"
   ],
   "files": [
-    "dist",
-    "!dist/*.test.*"
+    "/dist/index.js"
   ],
-  "main": "dist",
+  "main": "/dist/index.js",
   "engines": {
     "node": ">=8.5"
   },
@@ -43,7 +42,9 @@
     "build": "rm -rf dist && tsc",
     "build:development": "rm -rf dist && tsc --watch",
     "test": "ava --verbose dist/*.test.js",
-    "test:development": "ava --verbose --watch dist/*.test.js"
+    "test:development": "ava --verbose --watch dist/*.test.js",
+    "prepare": "yarn build",
+    "prepublishOnly": "yarn install && yarn lint && yarn build && yarn test"
   },
   "dependencies": {
     "@types/readable-stream": "^2.3.5",

@@ -4,6 +4,10 @@ import test from "ava";
 import { ReadAfterDestroyedError, WriteStream } from "./index";
 import { Readable } from "readable-stream";
 
+process.on("SIGINT", () => process.exit(0));
+process.on("SIGTERM", () => process.exit(0));
+process.on("SIGHUP", () => process.exit(0));
+
 function streamToString(stream: Readable): Promise<string> {
   return new Promise((resolve, reject) => {
     let ended = false;

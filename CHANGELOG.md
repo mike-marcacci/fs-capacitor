@@ -55,3 +55,4 @@
 - Update source to typescript.
 - Add `WriteStream.release` replacing the functionality of an error-free `WriteStream.destroy()`
 - **BREAKING:** Change `WriteStream.destroy()` to immediately destroy attached `ReadStream`s even without an error.
+- **BREAKING:** Reluctantly remove exported `.mjs` files now that we have an external commonjs dependency and are still missing clear interop guidance from node.
