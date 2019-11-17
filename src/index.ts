@@ -2,7 +2,7 @@ import crypto from "crypto";
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { Readable, Writable } from "readable-stream";
+import { Readable, Writable } from "stream";
 
 function checkSignalListeners(): void {
   if (!process.listeners("SIGINT").length)
@@ -70,7 +70,11 @@ export class ReadStream extends Readable {
 
         // If there were no more bytes to read and the write stream is finished,
         // than this stream has reached the end.
-        if (this._writeStream._writableState.finished) {
+        if (
+          ((this._writeStream as any) as {
+            _writableState: { finished: boolean };
+          })._writableState.finished
+        ) {
           this.push(null);
           return;
         }

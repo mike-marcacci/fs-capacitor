@@ -56,3 +56,8 @@
 - Add `WriteStream.release` replacing the functionality of an error-free `WriteStream.destroy()`
 - **BREAKING:** Change `WriteStream.destroy()` to immediately destroy attached `ReadStream`s even without an error.
 - **BREAKING:** Reluctantly remove exported `.mjs` files now that we have an external commonjs dependency and are still missing clear interop guidance from node.
+
+## 5.0.0
+
+- Remove dependency on `readable-stream` to expose new (but internally unused) features of streams in node v13.
+- **BREAKING:** Remove support for node v8.
