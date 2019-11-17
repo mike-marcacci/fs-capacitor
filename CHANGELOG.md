@@ -10,19 +10,19 @@
 
 ## 2.0.0
 
-- Updated dependencies.
+- Update dependencies.
 - Add tests for special stream scenarios.
 - **BREAKING:** Remove special handling of terminating events, see [jaydenseric/graphql-upload#131](https://github.com/jaydenseric/graphql-upload/issues/131)
 
 ### 2.0.1
 
-- Updated dependencies.
+- Update dependencies.
 - Move configs out of package.json
 - Use `wx` file flag instead of default `w` (thanks to @mattbretl via #8)
 
 ### 2.0.2
 
-- Updated dev dependencies.
+- Update dev dependencies.
 - Fix mjs structure to work with node v12.
 - Fix a bug that would pause consumption of read streams until completion. (thanks to @Nikosmonaut's investigation in #9).
 
@@ -44,7 +44,7 @@
 
 ## 3.0.0
 
-- Updated dev dependencies.
+- Update dev dependencies.
 - Add support for Node.js v13 by no longer extending `ReadStream` and `WriteStream` from node's `fs` library.
 - Specify `0o600` for buffer file permissions instead of node's default `0o666`
 - **BREAKING:** Remove several undocumented properties that existed for consistency with the extended classes.
@@ -59,5 +59,6 @@
 
 ## 5.0.0
 
+- Update dev dependencies.
 - Remove dependency on `readable-stream` to expose new (but internally unused) features of streams in node v13.
 - **BREAKING:** Remove support for node v8.

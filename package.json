@@ -26,15 +26,15 @@
   },
   "browserslist": "node >= 10",
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^2.3.2",
-    "@typescript-eslint/parser": "^2.3.2",
+    "@typescript-eslint/eslint-plugin": "^2.7.0",
+    "@typescript-eslint/parser": "^2.7.0",
     "ava": "^2.4.0",
     "eslint": "^6.5.1",
-    "eslint-config-prettier": "^6.3.0",
+    "eslint-config-prettier": "^6.6.0",
     "eslint-plugin-prettier": "^3.1.1",
     "nodemon": "^1.19.3",
-    "prettier": "^1.18.2",
-    "typescript": "^3.6.3"
+    "prettier": "^1.19.1",
+    "typescript": "^3.7.2"
   },
   "scripts": {
     "format": "prettier --list-different --write '**/*.{json,yml,md,ts}'",
