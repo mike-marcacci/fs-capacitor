@@ -1,5 +1,7 @@
 [![Build status](https://travis-ci.org/mike-marcacci/fs-capacitor.svg?branch=master)](https://travis-ci.org/mike-marcacci/fs-capacitor) [![Current version](https://badgen.net/npm/v/fs-capacitor)](https://npm.im/fs-capacitor) ![Supported Node.js versions](https://badgen.net/npm/node/fs-capacitor)
 
+**If you need to run fs-capacitor on node version 8, use fs-capacitor version 4 which will continue to be supported through node v8's LTS end-of-life, which is January 1, 2020.**
+
 # FS Capacitor
 
 FS Capacitor is a filesystem buffer for finite node streams. It supports simultaneous read/write, and can be used to create multiple independent readable streams, each starting at the beginning of the buffer.

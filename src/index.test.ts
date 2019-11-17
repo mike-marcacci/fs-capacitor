@@ -2,7 +2,7 @@ import fs from "fs";
 import stream from "stream";
 import test from "ava";
 import { ReadAfterDestroyedError, WriteStream } from "./index";
-import { Readable } from "readable-stream";
+import { Readable } from "stream";
 
 process.on("SIGINT", () => process.exit(0));
 process.on("SIGTERM", () => process.exit(0));
@@ -338,7 +338,7 @@ function withChunkSize(size: number): void {
     // Make sure complete data is sent to a read stream.
     const result2 = await streamToString(capacitor1Stream2);
     t.is(
-      capacitor1Stream2._readableState.ended,
+      (capacitor1Stream2 as any)._readableState.ended,
       true,
       "should mark read stream as ended"
     );
@@ -346,7 +346,7 @@ function withChunkSize(size: number): void {
 
     const result4 = await streamToString(capacitor1Stream4);
     t.is(
-      capacitor1Stream4._readableState.ended,
+      (capacitor1Stream4 as any)._readableState.ended,
       true,
       "should mark read stream as ended"
     );
