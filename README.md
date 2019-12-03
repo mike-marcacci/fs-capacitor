@@ -57,6 +57,19 @@ When the node process receives a `SIGINT`, `SIGTERM`, or `SIGHUP` signal and the
 
 Beginning in version 3, fs-capacitor will NOT listen for these signals. Instead, the application should handle these signals according to its own logic and call `process.exit()` when it is ready to exit. This allows the application to implement its own graceful shutdown procedures, such as waiting for a stream to finish.
 
+The following can be added to the application to ensure resources are cleaned up before a signal-induced exit:
+
+```js
+function shutdown() {
+  // Any sync or async graceful shutdown procedures can be run before exiting...
+  process.exit(0);
+}
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
+process.on("SIGHUP", shutdown);
+```
+
 ## API
 
 ### WriteStream
