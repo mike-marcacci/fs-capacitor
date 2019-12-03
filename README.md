@@ -46,7 +46,7 @@ FS Capacitor creates its temporary files in the directory ideneified by `os.tmpd
 
 Please do note that FS Capacitor does NOT release disk space _as data is consumed_, and therefore is not suitable for use with infinite streams or those larger than the filesystem.
 
-#### Ensuring cleanup on termination by process signal
+### Ensuring cleanup on termination by process signal
 
 FS Capacitor cleans up all of its temporary files before the process exits, by listening to the [node process's `exit` event](https://nodejs.org/api/process.html#process_event_exit). This event, however, is only emitted when the process is about to exit as a result of either:
 
@@ -61,7 +61,7 @@ The following can be added to the application to ensure resources are cleaned up
 
 ```js
 function shutdown() {
-  // Any sync or async graceful shutdown procedures can be run before exiting...
+  // Any sync or async graceful shutdown procedures can be run before exiting…
   process.exit(0);
 }
 
