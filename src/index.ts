@@ -4,23 +4,6 @@ import os from "os";
 import path from "path";
 import { Readable, Writable } from "readable-stream";
 
-function checkSignalListeners(): void {
-  if (!process.listeners("SIGINT").length)
-    process.emitWarning(
-      "There are no listeners for SIGINT. If your application receives a SIGINT signal, it is possible that some temporary files will not be cleaned up. Please see https://github.com/mike-marcacci/fs-capacitor#ensuring-cleanup-on-termination-by-process-signal"
-    );
-
-  if (!process.listeners("SIGTERM").length)
-    process.emitWarning(
-      "There are no listeners for SIGTERM. If your application receives a SIGTERM signal, it is possible that some temporary files will not be cleaned up. Please see https://github.com/mike-marcacci/fs-capacitor#ensuring-cleanup-on-termination-by-process-signal"
-    );
-
-  if (!process.listeners("SIGHUP").length)
-    process.emitWarning(
-      "There are no listeners for SIGHUP. If your application receives a SIGHUP signal, it is possible that some temporary files will not be cleaned up. Please see https://github.com/mike-marcacci/fs-capacitor#ensuring-cleanup-on-termination-by-process-signal"
-    );
-}
-
 export class ReadAfterDestroyedError extends Error {}
 export class ReadAfterReleasedError extends Error {}
 
@@ -90,7 +73,6 @@ export class ReadStream extends Readable {
 }
 
 export class WriteStream extends Writable {
-  private static _haveCheckedSignalListeners = false;
   private _fd: null | number = null;
   private _path: null | string = null;
   private _pos: number = 0;
@@ -99,12 +81,6 @@ export class WriteStream extends Writable {
 
   constructor() {
     super();
-
-    // Only warn about missing signal listeners once.
-    if (!WriteStream._haveCheckedSignalListeners) {
-      WriteStream._haveCheckedSignalListeners = true;
-      checkSignalListeners();
-    }
 
     // Generate a random filename.
     crypto.randomBytes(16, (error, buffer) => {
