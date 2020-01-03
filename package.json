@@ -32,7 +32,7 @@
     "eslint": "^6.5.1",
     "eslint-config-prettier": "^6.6.0",
     "eslint-plugin-prettier": "^3.1.1",
-    "nodemon": "^1.19.3",
+    "nodemon": "^2.0.2",
     "prettier": "^1.19.1",
     "typescript": "^3.7.2"
   },
