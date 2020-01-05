@@ -77,6 +77,45 @@ test("Data from a complete stream.", async t => {
   );
 });
 
+test("Allows specification of encoding.", async t => {
+  const data = Buffer.from("1".repeat(10), "utf8");
+  const source = new stream.Readable({
+    read() {
+      // Intentionally not implementing anything here.
+    }
+  });
+
+  // Add the first chunk of data (without any consumer)
+  source.push(data);
+  source.push(null);
+
+  // Create a new capacitor
+  const capacitor1 = new WriteStream();
+  t.is(capacitor1["_readStreams"].size, 0, "should start with 0 read streams");
+
+  // Pipe data to the capacitor
+  source.pipe(capacitor1);
+
+  // Attach a read stream
+  const capacitor1Stream1 = capacitor1.createReadStream("capacitor1Stream1", {
+    encoding: "base64"
+  });
+  t.is(
+    capacitor1["_readStreams"].size,
+    1,
+    "should attach a new read stream before receiving data"
+  );
+
+  // Wait until capacitor is finished writing all data
+  const result = await streamToString(capacitor1Stream1);
+  t.is(result, data.toString("base64"), "should stream all data");
+  t.is(
+    capacitor1["_readStreams"].size,
+    0,
+    "should no longer have any attacheds read streams"
+  );
+});
+
 test("Data from an open stream, 1 chunk, no read streams.", async t => {
   let data = "";
   const source = new stream.Readable({
