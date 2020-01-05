@@ -57,8 +57,24 @@
 - **BREAKING:** Change `WriteStream.destroy()` to immediately destroy attached `ReadStream`s even without an error.
 - **BREAKING:** Reluctantly remove exported `.mjs` files now that we have an external commonjs dependency and are still missing clear interop guidance from node.
 
+### 4.0.1
+
+- Add cleanup example to README.md
+- Remove warnings about signal listeners.
+
 ## 5.0.0
 
 - Update dev dependencies.
 - Remove dependency on `readable-stream` to expose new (but internally unused) features of streams in node v13.
 - **BREAKING:** Remove support for node v8.
+
+### 5.0.1
+
+- Add cleanup example to README.md
+- Remove warnings about signal listeners.
+
+### 6.0.0
+
+- Update dev dependencies.
+- Add the ability to specify encoding and highWaterMark in `createReadStream()`.
+- **BREAKING:** Remove "name" argument from `createReadStream()`.
