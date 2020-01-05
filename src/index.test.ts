@@ -60,7 +60,7 @@ test("Data from a complete stream.", async t => {
   source.pipe(capacitor1);
 
   // Attach a read stream
-  const capacitor1Stream1 = capacitor1.createReadStream("capacitor1Stream1");
+  const capacitor1Stream1 = capacitor1.createReadStream();
   t.is(
     capacitor1["_readStreams"].size,
     1,
@@ -97,7 +97,7 @@ test("Allows specification of encoding.", async t => {
   source.pipe(capacitor1);
 
   // Attach a read stream
-  const capacitor1Stream1 = capacitor1.createReadStream("capacitor1Stream1", {
+  const capacitor1Stream1 = capacitor1.createReadStream({
     encoding: "base64"
   });
   t.is(
@@ -138,7 +138,7 @@ test("Data from an open stream, 1 chunk, no read streams.", async t => {
   data += chunk1;
 
   // Attach a read stream
-  const capacitor1Stream1 = capacitor1.createReadStream("capacitor1Stream1");
+  const capacitor1Stream1 = capacitor1.createReadStream();
   t.is(
     capacitor1["_readStreams"].size,
     1,
@@ -171,7 +171,7 @@ test("Data from an open stream, 1 chunk, 1 read stream.", async t => {
   source.pipe(capacitor1);
 
   // Attach a read stream
-  const capacitor1Stream1 = capacitor1.createReadStream("capacitor1Stream1");
+  const capacitor1Stream1 = capacitor1.createReadStream();
   t.is(
     capacitor1["_readStreams"].size,
     1,
@@ -196,8 +196,8 @@ test("Data from an open stream, 1 chunk, 1 read stream.", async t => {
 
 test("Destroy with error.", async t => {
   const capacitor2 = new WriteStream();
-  const capacitor2Stream1 = capacitor2.createReadStream("capacitor2Stream1");
-  const capacitor2Stream2 = capacitor2.createReadStream("capacitor2Stream2");
+  const capacitor2Stream1 = capacitor2.createReadStream();
+  const capacitor2Stream2 = capacitor2.createReadStream();
 
   const capacitor2ReadStream1Destroyed = new Promise(resolve =>
     capacitor2Stream1.on("close", resolve)
@@ -241,8 +241,8 @@ test("Destroy with error.", async t => {
 
 test("Destroy without error.", async t => {
   const capacitor3 = new WriteStream();
-  const capacitor3Stream1 = capacitor3.createReadStream("capacitor3Stream1");
-  const capacitor3Stream2 = capacitor3.createReadStream("capacitor3Stream2");
+  const capacitor3Stream1 = capacitor3.createReadStream();
+  const capacitor3Stream2 = capacitor3.createReadStream();
 
   const capacitor3ReadStream1Destroyed = new Promise(resolve =>
     capacitor3Stream1.on("close", resolve)
@@ -297,7 +297,7 @@ function withChunkSize(size: number): void {
       0,
       "should start with 0 read streams"
     );
-    const capacitor1Stream1 = capacitor1.createReadStream("capacitor1Stream1");
+    const capacitor1Stream1 = capacitor1.createReadStream();
     t.is(
       capacitor1["_readStreams"].size,
       1,
@@ -330,7 +330,7 @@ function withChunkSize(size: number): void {
     );
 
     // Create a new stream after some data has been written.
-    const capacitor1Stream2 = capacitor1.createReadStream("capacitor1Stream2");
+    const capacitor1Stream2 = capacitor1.createReadStream();
     t.is(
       capacitor1["_readStreams"].size,
       2,
@@ -366,8 +366,8 @@ function withChunkSize(size: number): void {
     await finished;
 
     // Create a new stream after the source has ended.
-    const capacitor1Stream3 = capacitor1.createReadStream("capacitor1Stream3");
-    const capacitor1Stream4 = capacitor1.createReadStream("capacitor1Stream4");
+    const capacitor1Stream3 = capacitor1.createReadStream();
+    const capacitor1Stream4 = capacitor1.createReadStream();
     t.is(
       capacitor1["_readStreams"].size,
       4,

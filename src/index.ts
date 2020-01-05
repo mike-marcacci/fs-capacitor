@@ -11,11 +11,8 @@ export class ReadStream extends Readable {
   private _pos: number = 0;
   private _writeStream: WriteStream;
 
-  name: undefined | string;
-
   constructor(
     writeStream: WriteStream,
-    name?: string,
     options?: {
       highWaterMark?: number;
       encoding?: string;
@@ -27,7 +24,6 @@ export class ReadStream extends Readable {
       autoDestroy: true
     });
     this._writeStream = writeStream;
-    this.name = name;
   }
 
   _read(n: number): void {
@@ -214,13 +210,10 @@ export class WriteStream extends Writable {
       readStream.destroy(error || undefined);
   }
 
-  createReadStream(
-    name?: string,
-    options?: {
-      highWaterMark?: number;
-      encoding?: string;
-    }
-  ): ReadStream {
+  createReadStream(options?: {
+    highWaterMark?: number;
+    encoding?: string;
+  }): ReadStream {
     if (this.destroyed)
       throw new ReadAfterDestroyedError(
         "A ReadStream cannot be created from a destroyed WriteStream."
@@ -231,7 +224,7 @@ export class WriteStream extends Writable {
         "A ReadStream cannot be created from a released WriteStream."
       );
 
-    const readStream = new ReadStream(this, name, options);
+    const readStream = new ReadStream(this, options);
     this._readStreams.add(readStream);
 
     const remove = (): void => {
