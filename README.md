@@ -1,7 +1,5 @@
 [![Build status](https://travis-ci.org/mike-marcacci/fs-capacitor.svg?branch=master)](https://travis-ci.org/mike-marcacci/fs-capacitor) [![Current version](https://badgen.net/npm/v/fs-capacitor)](https://npm.im/fs-capacitor) ![Supported Node.js versions](https://badgen.net/npm/node/fs-capacitor)
 
-**If you need to run fs-capacitor on node version 8, use fs-capacitor version 4 which will continue to be supported through node v8's LTS end-of-life, which is January 1, 2020.**
-
 # FS Capacitor
 
 FS Capacitor is a filesystem buffer for finite node streams. It supports simultaneous read/write, and can be used to create multiple independent readable streams, each starting at the beginning of the buffer.
@@ -74,9 +72,9 @@ process.on("SIGHUP", shutdown);
 
 ### WriteStream
 
-`WriteStream` inherets all the methods of [`fs.WriteStream`](https://nodejs.org/api/fs.html#fs_class_fs_writestream)
+`WriteStream` extends [`stream.Writable`](https://nodejs.org/api/stream.html#stream_implementing_a_writable_stream)
 
-#### `new WriteStream()`
+#### `new WriteStream(options: WriteStreamOptions)`
 
 Create a new `WriteStream` instance.
 
@@ -98,26 +96,26 @@ Release the `WriteStream`'s claim on the underlying resources. Once called, dest
 
 Destroy the `WriteStream` and all attached `ReadStream`s. If `error` is present, attached `ReadStream`s are destroyed with the same error.
 
+### WriteStreamOptions
+
+#### `.highWaterMark?: number`
+
+Uses node's default of `16384` (16kb). Optional buffer size at which the writable stream will begin returning `false`. See [node's docs for `stream.Writable`](https://nodejs.org/api/stream.html#stream_constructor_new_stream_writable_options). For the curious, node has [a guide on backpressure in streams](https://nodejs.org/es/docs/guides/backpressuring-in-streams/).
+
+#### `.defaultEncoding`
+
+Uses node's default of `utf8`. Optional default encoding to use when no encoding is specified as an argument to `stream.write()`. See [node's docs for `stream.Writable`](https://nodejs.org/api/stream.html#stream_constructor_new_stream_writable_options). Possible values depend on the version of node, and are [defined in node's buffer implementation](https://github.com/nodejs/node/blob/master/lib/buffer.js);
+
 ### ReadStream
 
-`ReadStream` inherets all the methods of [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream).
+`ReadStream` extends [`stream.Readable`](https://nodejs.org/api/stream.html#stream_new_stream_readable_options);
 
 ### ReadStreamOptions
 
 #### `.highWaterMark`
 
-Defaults to `16384` (16kb). Optional value to use as the readable stream's highWaterMark, specifying the number of bytes (for binary data) or characters (for strings) that will be bufferred into memory. See [node's docs for `stream.Readable`](https://nodejs.org/api/stream.html#stream_new_stream_readable_options). For the curious, node has [a guide on backpressure in streams](https://nodejs.org/es/docs/guides/backpressuring-in-streams/).
+Uses node's default of `16384` (16kb). Optional value to use as the readable stream's highWaterMark, specifying the number of bytes (for binary data) or characters (for strings) that will be bufferred into memory. See [node's docs for `stream.Readable`](https://nodejs.org/api/stream.html#stream_new_stream_readable_options). For the curious, node has [a guide on backpressure in streams](https://nodejs.org/es/docs/guides/backpressuring-in-streams/).
 
 #### `.encoding`
 
-Defaults to `utf8`. Optional encoding to use when the stream's output is desired as a string. See [node's docs for `stream.Readable`](https://nodejs.org/api/stream.html#stream_new_stream_readable_options). Possible values depend on the version of node, and are [defined in node's buffer implementation](https://github.com/nodejs/node/blob/master/lib/buffer.js).
-
-### WriteStreamOptions
-
-#### `.highWaterMark?: number`
-
-Defaults to `16384` (16kb). Optional buffer size at which the writable stream will begin returning `false`. See [node's docs for `stream.Writable`](https://nodejs.org/api/stream.html#stream_constructor_new_stream_writable_options). For the curious, node has [a guide on backpressure in streams](https://nodejs.org/es/docs/guides/backpressuring-in-streams/).
-
-#### `.defaultEncoding`
-
-Defaults to `utf8`. Optional default encoding to use when no encoding is specified as an argument to `stream.write()`. See [node's docs for `stream.Writable`](https://nodejs.org/api/stream.html#stream_constructor_new_stream_writable_options). Possible values depend on the version of node, and are [defined in node's buffer implementation](https://github.com/nodejs/node/blob/master/lib/buffer.js);
+Uses node's default of `utf8`. Optional encoding to use when the stream's output is desired as a string. See [node's docs for `stream.Readable`](https://nodejs.org/api/stream.html#stream_new_stream_readable_options). Possible values depend on the version of node, and are [defined in node's buffer implementation](https://github.com/nodejs/node/blob/master/lib/buffer.js).

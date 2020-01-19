@@ -161,6 +161,7 @@ test("Allows specification of highWaterMark.", async t => {
     "allow specification of highWaterMark in new WriteStream"
   );
 
+  capacitor1Stream1.destroy();
   capacitor1.destroy();
 });
 
