@@ -77,7 +77,7 @@ test("Data from a complete stream.", async t => {
   );
 });
 
-test("Allows specification of encoding.", async t => {
+test("Allows specification of encoding in createReadStream.", async t => {
   const data = Buffer.from("1".repeat(10), "utf8");
   const source = new stream.Readable({
     read() {
@@ -91,7 +91,6 @@ test("Allows specification of encoding.", async t => {
 
   // Create a new capacitor
   const capacitor1 = new WriteStream();
-  t.is(capacitor1["_readStreams"].size, 0, "should start with 0 read streams");
 
   // Pipe data to the capacitor
   source.pipe(capacitor1);
@@ -100,11 +99,6 @@ test("Allows specification of encoding.", async t => {
   const capacitor1Stream1 = capacitor1.createReadStream({
     encoding: "base64"
   });
-  t.is(
-    capacitor1["_readStreams"].size,
-    1,
-    "should attach a new read stream before receiving data"
-  );
 
   // Wait until capacitor is finished writing all data
   const result = await streamToString(capacitor1Stream1);
@@ -114,6 +108,60 @@ test("Allows specification of encoding.", async t => {
     0,
     "should no longer have any attacheds read streams"
   );
+});
+
+test("Allows specification of defaultEncoding in new WriteStream.", async t => {
+  const data = Buffer.from("1".repeat(10), "utf8");
+  const source = new stream.Readable({
+    encoding: "base64",
+    read() {
+      // Intentionally not implementing anything here.
+    }
+  });
+
+  // Add the first chunk of data (without any consumer)
+  source.push(data);
+  source.push(null);
+
+  // Create a new capacitor
+  const capacitor1 = new WriteStream({ defaultEncoding: "base64" });
+
+  // Pipe data to the capacitor
+  source.pipe(capacitor1);
+
+  // Attach a read stream
+  const capacitor1Stream1 = capacitor1.createReadStream({});
+
+  // Wait until capacitor is finished writing all data
+  const result = await streamToString(capacitor1Stream1);
+  t.is(result, data.toString("utf8"), "should stream all data");
+  t.is(
+    capacitor1["_readStreams"].size,
+    0,
+    "should no longer have any attacheds read streams"
+  );
+});
+
+test("Allows specification of highWaterMark.", async t => {
+  // Create a new capacitor
+  const capacitor1 = new WriteStream({ highWaterMark: 10001 });
+  t.is(
+    capacitor1.writableHighWaterMark,
+    10001,
+    "allow specification of highWaterMark in new WriteStream"
+  );
+
+  // Attach a read stream
+  const capacitor1Stream1 = capacitor1.createReadStream({
+    highWaterMark: 10002
+  });
+  t.is(
+    capacitor1Stream1.readableHighWaterMark,
+    10002,
+    "allow specification of highWaterMark in new WriteStream"
+  );
+
+  capacitor1.destroy();
 });
 
 test("Data from an open stream, 1 chunk, no read streams.", async t => {

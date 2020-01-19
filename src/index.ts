@@ -7,17 +7,16 @@ import { Readable, Writable } from "stream";
 export class ReadAfterDestroyedError extends Error {}
 export class ReadAfterReleasedError extends Error {}
 
+export interface ReadStreamOptions {
+  highWaterMark?: number;
+  encoding?: string;
+}
+
 export class ReadStream extends Readable {
   private _pos: number = 0;
   private _writeStream: WriteStream;
 
-  constructor(
-    writeStream: WriteStream,
-    options?: {
-      highWaterMark?: number;
-      encoding?: string;
-    }
-  ) {
+  constructor(writeStream: WriteStream, options?: ReadStreamOptions) {
     super({
       highWaterMark: options?.highWaterMark,
       encoding: options?.encoding,
@@ -79,6 +78,11 @@ export class ReadStream extends Readable {
   }
 }
 
+export interface WriteStreamOptions {
+  highWaterMark?: number;
+  defaultEncoding?: string;
+}
+
 export class WriteStream extends Writable {
   private _fd: null | number = null;
   private _path: null | string = null;
@@ -86,8 +90,12 @@ export class WriteStream extends Writable {
   private _readStreams: Set<ReadStream> = new Set();
   private _released: boolean = false;
 
-  constructor() {
-    super();
+  constructor(options?: WriteStreamOptions) {
+    super({
+      highWaterMark: options?.highWaterMark,
+      defaultEncoding: options?.defaultEncoding,
+      autoDestroy: false
+    });
 
     // Generate a random filename.
     crypto.randomBytes(16, (error, buffer) => {

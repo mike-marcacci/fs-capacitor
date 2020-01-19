@@ -73,8 +73,15 @@
 - Add cleanup example to README.md
 - Remove warnings about signal listeners.
 
-### 6.0.0
+## 6.0.0
 
 - Update dev dependencies.
 - Add the ability to specify encoding and highWaterMark in `createReadStream()`.
 - **BREAKING:** Remove "name" argument from `createReadStream()`.
+
+### 6.1.0
+
+- Add the ability to specify defaultEncoding and highWaterMark in `new WriteStream()`.
+- Export `ReadStreamOptions` and `WriteStreamOptions` interfaces.
+- Add tests for highWaterMark option in `createReadStream`.
+- Add documentation of configuration options to README.

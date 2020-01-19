@@ -80,7 +80,7 @@ process.on("SIGHUP", shutdown);
 
 Create a new `WriteStream` instance.
 
-#### `.createReadStream(): ReadStream`
+#### `.createReadStream(options?: ReadStreamOptions): ReadStream`
 
 Create a new `ReadStream` instance attached to the `WriteStream` instance.
 
@@ -101,3 +101,23 @@ Destroy the `WriteStream` and all attached `ReadStream`s. If `error` is present,
 ### ReadStream
 
 `ReadStream` inherets all the methods of [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream).
+
+### ReadStreamOptions
+
+#### `.highWaterMark`
+
+Defaults to `16384` (16kb). Optional value to use as the readable stream's highWaterMark, specifying the number of bytes (for binary data) or characters (for strings) that will be bufferred into memory. See [node's docs for `stream.Readable`](https://nodejs.org/api/stream.html#stream_new_stream_readable_options). For the curious, node has [a guide on backpressure in streams](https://nodejs.org/es/docs/guides/backpressuring-in-streams/).
+
+#### `.encoding`
+
+Defaults to `utf8`. Optional encoding to use when the stream's output is desired as a string. See [node's docs for `stream.Readable`](https://nodejs.org/api/stream.html#stream_new_stream_readable_options). Possible values depend on the version of node, and are [defined in node's buffer implementation](https://github.com/nodejs/node/blob/master/lib/buffer.js).
+
+### WriteStreamOptions
+
+#### `.highWaterMark?: number`
+
+Defaults to `16384` (16kb). Optional buffer size at which the writable stream will begin returning `false`. See [node's docs for `stream.Writable`](https://nodejs.org/api/stream.html#stream_constructor_new_stream_writable_options). For the curious, node has [a guide on backpressure in streams](https://nodejs.org/es/docs/guides/backpressuring-in-streams/).
+
+#### `.defaultEncoding`
+
+Defaults to `utf8`. Optional default encoding to use when no encoding is specified as an argument to `stream.write()`. See [node's docs for `stream.Writable`](https://nodejs.org/api/stream.html#stream_constructor_new_stream_writable_options). Possible values depend on the version of node, and are [defined in node's buffer implementation](https://github.com/nodejs/node/blob/master/lib/buffer.js);
