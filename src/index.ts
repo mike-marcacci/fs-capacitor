@@ -2,14 +2,14 @@ import crypto from "crypto";
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { Readable, Writable } from "stream";
+import { Readable, ReadableOptions, Writable, WritableOptions } from "stream";
 
 export class ReadAfterDestroyedError extends Error {}
 export class ReadAfterReleasedError extends Error {}
 
 export interface ReadStreamOptions {
-  highWaterMark?: number;
-  encoding?: string;
+  highWaterMark?: ReadableOptions["highWaterMark"];
+  encoding?: ReadableOptions["encoding"];
 }
 
 export class ReadStream extends Readable {
@@ -79,8 +79,8 @@ export class ReadStream extends Readable {
 }
 
 export interface WriteStreamOptions {
-  highWaterMark?: number;
-  defaultEncoding?: string;
+  highWaterMark?: WritableOptions["highWaterMark"];
+  defaultEncoding?: WritableOptions["defaultEncoding"];
 }
 
 export class WriteStream extends Writable {
@@ -218,10 +218,7 @@ export class WriteStream extends Writable {
       readStream.destroy(error || undefined);
   }
 
-  createReadStream(options?: {
-    highWaterMark?: number;
-    encoding?: string;
-  }): ReadStream {
+  createReadStream(options?: ReadStreamOptions): ReadStream {
     if (this.destroyed)
       throw new ReadAfterDestroyedError(
         "A ReadStream cannot be created from a destroyed WriteStream."
