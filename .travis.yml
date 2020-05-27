@@ -1,8 +1,0 @@
-language: node_js
-node_js:
-  - "10"
-  - "12"
-  - "node"
-notifications:
-  email: true
-script: yarn lint && yarn test

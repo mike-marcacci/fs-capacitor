@@ -1,4 +1,4 @@
-[![Build status](https://travis-ci.org/mike-marcacci/fs-capacitor.svg?branch=master)](https://travis-ci.org/mike-marcacci/fs-capacitor) [![Current version](https://badgen.net/npm/v/fs-capacitor)](https://npm.im/fs-capacitor) ![Supported Node.js versions](https://badgen.net/npm/node/fs-capacitor)
+![Continuous Integration](https://github.com/mike-marcacci/fs-capacitor/workflows/Continuous%20Integration/badge.svg) [![Current Version](https://badgen.net/npm/v/fs-capacitor)](https://npm.im/fs-capacitor) ![Supported Node.js Versions](https://badgen.net/npm/node/fs-capacitor)
 
 # FS Capacitor
 
