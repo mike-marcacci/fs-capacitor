@@ -14,7 +14,7 @@ function streamToString(stream: Readable): Promise<string> {
     let data = "";
     stream
       .on("error", reject)
-      .on("data", chunk => {
+      .on("data", (chunk) => {
         if (ended) throw new Error("`data` emitted after `end`");
         data += chunk;
       })
@@ -38,12 +38,12 @@ function waitForBytesWritten(
   setImmediate(() => waitForBytesWritten(stream, bytes, resolve));
 }
 
-test("Data from a complete stream.", async t => {
+test("Data from a complete stream.", async (t) => {
   let data = "";
   const source = new stream.Readable({
     read() {
       // Intentionally not implementing anything here.
-    }
+    },
   });
 
   // Add the first chunk of data (without any consumer)
@@ -77,12 +77,12 @@ test("Data from a complete stream.", async t => {
   );
 });
 
-test("Allows specification of encoding in createReadStream.", async t => {
+test("Allows specification of encoding in createReadStream.", async (t) => {
   const data = Buffer.from("1".repeat(10), "utf8");
   const source = new stream.Readable({
     read() {
       // Intentionally not implementing anything here.
-    }
+    },
   });
 
   // Add the first chunk of data (without any consumer)
@@ -97,7 +97,7 @@ test("Allows specification of encoding in createReadStream.", async t => {
 
   // Attach a read stream
   const capacitor1Stream1 = capacitor1.createReadStream({
-    encoding: "base64"
+    encoding: "base64",
   });
 
   // Wait until capacitor is finished writing all data
@@ -110,13 +110,13 @@ test("Allows specification of encoding in createReadStream.", async t => {
   );
 });
 
-test("Allows specification of defaultEncoding in new WriteStream.", async t => {
+test("Allows specification of defaultEncoding in new WriteStream.", async (t) => {
   const data = Buffer.from("1".repeat(10), "utf8");
   const source = new stream.Readable({
     encoding: "base64",
     read() {
       // Intentionally not implementing anything here.
-    }
+    },
   });
 
   // Add the first chunk of data (without any consumer)
@@ -142,7 +142,7 @@ test("Allows specification of defaultEncoding in new WriteStream.", async t => {
   );
 });
 
-test("Allows specification of highWaterMark.", async t => {
+test("Allows specification of highWaterMark.", async (t) => {
   // Create a new capacitor
   const capacitor1 = new WriteStream({ highWaterMark: 10001 });
   t.is(
@@ -153,7 +153,7 @@ test("Allows specification of highWaterMark.", async t => {
 
   // Attach a read stream
   const capacitor1Stream1 = capacitor1.createReadStream({
-    highWaterMark: 10002
+    highWaterMark: 10002,
   });
   t.is(
     capacitor1Stream1.readableHighWaterMark,
@@ -165,12 +165,12 @@ test("Allows specification of highWaterMark.", async t => {
   capacitor1.destroy();
 });
 
-test("Data from an open stream, 1 chunk, no read streams.", async t => {
+test("Data from an open stream, 1 chunk, no read streams.", async (t) => {
   let data = "";
   const source = new stream.Readable({
     read() {
       // Intentionally not implementing anything here.
-    }
+    },
   });
 
   // Create a new capacitor
@@ -204,12 +204,12 @@ test("Data from an open stream, 1 chunk, no read streams.", async t => {
   );
 });
 
-test("Data from an open stream, 1 chunk, 1 read stream.", async t => {
+test("Data from an open stream, 1 chunk, 1 read stream.", async (t) => {
   let data = "";
   const source = new stream.Readable({
     read() {
       // Intentionally not implementing anything here.
-    }
+    },
   });
 
   // Create a new capacitor
@@ -243,15 +243,15 @@ test("Data from an open stream, 1 chunk, 1 read stream.", async t => {
   );
 });
 
-test("Destroy with error.", async t => {
+test("Destroy with error.", async (t) => {
   const capacitor2 = new WriteStream();
   const capacitor2Stream1 = capacitor2.createReadStream();
   const capacitor2Stream2 = capacitor2.createReadStream();
 
-  const capacitor2ReadStream1Destroyed = new Promise(resolve =>
+  const capacitor2ReadStream1Destroyed = new Promise((resolve) =>
     capacitor2Stream1.on("close", resolve)
   );
-  const capacitor2Destroyed = new Promise(resolve =>
+  const capacitor2Destroyed = new Promise((resolve) =>
     capacitor2.on("close", resolve)
   );
 
@@ -288,15 +288,15 @@ test("Destroy with error.", async t => {
   );
 });
 
-test("Destroy without error.", async t => {
+test("Destroy without error.", async (t) => {
   const capacitor3 = new WriteStream();
   const capacitor3Stream1 = capacitor3.createReadStream();
   const capacitor3Stream2 = capacitor3.createReadStream();
 
-  const capacitor3ReadStream1Destroyed = new Promise(resolve =>
+  const capacitor3ReadStream1Destroyed = new Promise((resolve) =>
     capacitor3Stream1.on("close", resolve)
   );
-  const capacitor3Destroyed = new Promise(resolve =>
+  const capacitor3Destroyed = new Promise((resolve) =>
     capacitor3.on("close", resolve)
   );
 
@@ -329,12 +329,12 @@ test("Destroy without error.", async t => {
 });
 
 function withChunkSize(size: number): void {
-  test(`End-to-end with chunk size: ${size}`, async t => {
+  test(`End-to-end with chunk size: ${size}`, async (t) => {
     let data = "";
     const source = new stream.Readable({
       read() {
         // Intentionally not implementing anything here.
-      }
+      },
     });
 
     // Create a new capacitor and read stream before any data has been written.
@@ -354,7 +354,7 @@ function withChunkSize(size: number): void {
     );
 
     // Make sure a temporary file was created.
-    await new Promise(resolve => capacitor1.on("ready", resolve));
+    await new Promise((resolve) => capacitor1.on("ready", resolve));
     const path = capacitor1["_path"] as string;
     const fd = capacitor1["_fd"] as number;
     t.is(
@@ -374,7 +374,7 @@ function withChunkSize(size: number): void {
     data += chunk1;
 
     // Wait until this chunk has been written to the buffer
-    await new Promise(resolve =>
+    await new Promise((resolve) =>
       waitForBytesWritten(capacitor1, size, resolve)
     );
 
@@ -386,7 +386,7 @@ function withChunkSize(size: number): void {
       "should attach a new read stream after first write"
     );
 
-    const writeEventBytesWritten = new Promise(resolve => {
+    const writeEventBytesWritten = new Promise((resolve) => {
       capacitor1.once("write", () => {
         resolve(capacitor1["_pos"]);
       });
@@ -398,7 +398,7 @@ function withChunkSize(size: number): void {
     data += chunk2;
 
     // Wait until this chunk has been written to the buffer
-    await new Promise(resolve =>
+    await new Promise((resolve) =>
       waitForBytesWritten(capacitor1, 2 * size, resolve)
     );
 
@@ -410,7 +410,9 @@ function withChunkSize(size: number): void {
     );
 
     // End the source & wait until capacitor is finished.
-    const finished = new Promise(resolve => capacitor1.once("finish", resolve));
+    const finished = new Promise((resolve) =>
+      capacitor1.once("finish", resolve)
+    );
     source.push(null);
     await finished;
 
@@ -447,7 +449,7 @@ function withChunkSize(size: number): void {
     );
 
     // Make sure a read stream can be destroyed.
-    await new Promise(resolve => {
+    await new Promise((resolve) => {
       capacitor1Stream1.once("error", resolve);
       capacitor1Stream1.destroy(new Error("test"));
     });
@@ -473,10 +475,10 @@ function withChunkSize(size: number): void {
     t.true(capacitor1["_released"], "should mark for future destruction");
 
     // Make sure the capacitor is destroyed once no read streams exist
-    const readStreamDestroyed = new Promise(resolve =>
+    const readStreamDestroyed = new Promise((resolve) =>
       capacitor1Stream3.on("close", resolve)
     );
-    const capacitorDestroyed = new Promise(resolve =>
+    const capacitorDestroyed = new Promise((resolve) =>
       capacitor1.on("close", resolve)
     );
     capacitor1Stream3.destroy();

@@ -20,7 +20,7 @@ export class ReadStream extends Readable {
     super({
       highWaterMark: options?.highWaterMark,
       encoding: options?.encoding,
-      autoDestroy: true
+      autoDestroy: true,
     });
     this._writeStream = writeStream;
   }
@@ -94,7 +94,7 @@ export class WriteStream extends Writable {
     super({
       highWaterMark: options?.highWaterMark,
       defaultEncoding: options?.defaultEncoding,
-      autoDestroy: false
+      autoDestroy: false,
     });
 
     // Generate a random filename.
@@ -162,7 +162,7 @@ export class WriteStream extends Writable {
       return;
     }
 
-    fs.write(this._fd, chunk, 0, chunk.length, this._pos, error => {
+    fs.write(this._fd, chunk, 0, chunk.length, this._pos, (error) => {
       if (error) {
         callback(error);
         return;
@@ -198,10 +198,10 @@ export class WriteStream extends Writable {
     }
 
     // Close the file descriptor.
-    fs.close(fd, closeError => {
+    fs.close(fd, (closeError) => {
       // An error here probably means the fd was already closed, but we can
       // still try to unlink the file.
-      fs.unlink(path, unlinkError => {
+      fs.unlink(path, (unlinkError) => {
         // If we are unable to unlink the file, the operating system will
         // clean up on next restart, since we use store thes in `os.tmpdir()`
         this._fd = null;
@@ -254,5 +254,5 @@ export default {
   WriteStream,
   ReadStream,
   ReadAfterDestroyedError,
-  ReadAfterReleasedError
+  ReadAfterReleasedError,
 };
