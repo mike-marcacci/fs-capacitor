@@ -85,3 +85,8 @@
 - Export `ReadStreamOptions` and `WriteStreamOptions` interfaces.
 - Add tests for highWaterMark option in `createReadStream`.
 - Add documentation of configuration options to README.
+
+### 6.2.0
+
+- Upgrade dependencies.
+- Update option types to match changes in @types/node.

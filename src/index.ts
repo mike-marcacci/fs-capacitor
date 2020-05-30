@@ -35,7 +35,7 @@ export class ReadStream extends Readable {
 
     // Using `allocUnsafe` here is OK because we return a slice the length of
     // `bytesRead`, and discard the rest. This prevents node from having to zero
-    // out the enture allocation first.
+    // out the entire allocation first.
     const buf = Buffer.allocUnsafe(n);
     fs.read(
       this._writeStream["_fd"],
