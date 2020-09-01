@@ -26,7 +26,7 @@
   },
   "browserslist": "node >= 10",
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^3.0.2",
+    "@typescript-eslint/eslint-plugin": "^4.0.0",
     "@typescript-eslint/parser": "^3.0.2",
     "ava": "^3.1.0",
     "eslint": "^7.1.0",
