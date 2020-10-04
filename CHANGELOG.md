@@ -90,3 +90,8 @@
 
 - Upgrade dependencies.
 - Update option types to match changes in @types/node.
+
+### master
+
+- Upgrade dependencies.
+- **BREAKING:** Drop support for node 13.
