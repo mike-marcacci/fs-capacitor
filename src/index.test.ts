@@ -1,8 +1,10 @@
+import path from "path";
 import fs from "fs";
 import stream from "stream";
 import test from "ava";
 import { ReadAfterDestroyedError, WriteStream } from "./index";
 import { Readable } from "stream";
+import { fork } from "child_process";
 
 process.on("SIGINT", () => process.exit(0));
 process.on("SIGTERM", () => process.exit(0));
@@ -286,6 +288,7 @@ test("Destroy with error.", async (t) => {
     error,
     "should emit the original error on write stream"
   );
+  t.is(capacitor2["_cleanup"], null, "should remove cleanup function");
 });
 
 test("Destroy without error.", async (t) => {
@@ -326,6 +329,29 @@ test("Destroy without error.", async (t) => {
     "should not emit an error on read stream"
   );
   t.is(capacitor3Error, undefined, "should not emit am error on write stream");
+  t.is(capacitor3["_cleanup"], null, "should remove cleanup function");
+});
+
+test("destroy after ready", async (t) => {
+  const capacitor = new WriteStream();
+  await new Promise((resolve) => capacitor.once("ready", resolve));
+
+  const cleanup = capacitor["_cleanup"] as () => void;
+  t.truthy(cleanup, "should set cleanup function");
+  t.truthy(
+    Array.from(WriteStream["_cleanupCalls"]).find((c) => c === cleanup),
+    "should add cleanup function to _cleanupCalls"
+  );
+
+  const destroyed = new Promise((resolve) => capacitor.on("close", resolve));
+  capacitor.destroy();
+  await destroyed;
+
+  t.is(capacitor["_cleanup"], null, "should delete cleanup function");
+  t.falsy(
+    Array.from(WriteStream["_cleanupCalls"]).find((c) => c === cleanup),
+    "should delete cleanup function from _cleanupCalls"
+  );
 });
 
 function withChunkSize(size: number): void {
@@ -522,3 +548,40 @@ withChunkSize(10);
 
 // Test with large (above-highWaterMark, 16384) chunks
 withChunkSize(100000);
+
+test("Deletes files on exit.", async (t) => {
+  const child = fork(path.resolve(__dirname, "test", "deletion"));
+  const filePath: string = await new Promise((resolve) => {
+    child.on("message", (msg: Record<string, any>) => {
+      if (msg.path) {
+        resolve(msg.path);
+      }
+    });
+  });
+  t.truthy(filePath);
+
+  // file should exist at this point
+  t.is(fs.existsSync(filePath), true);
+
+  const exitPromise = new Promise((resolve) => {
+    child.on("exit", resolve);
+  });
+  child.send({ exit: true });
+  const exitCode = await exitPromise;
+  t.is(exitCode, 0);
+
+  t.is(fs.existsSync(filePath), false);
+});
+
+test("Only registers a single exit listener", async (t) => {
+  const capacitor1 = new WriteStream();
+  await new Promise((resolve) => capacitor1.on("ready", resolve));
+
+  const capacitor2 = new WriteStream();
+  await new Promise((resolve) => capacitor2.on("ready", resolve));
+
+  const listeners = process
+    .listeners("exit")
+    .filter((f) => f.name === "fsCapacitorCleanup");
+  t.is(listeners.length, 1);
+});

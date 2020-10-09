@@ -83,12 +83,71 @@ export interface WriteStreamOptions {
   defaultEncoding?: WritableOptions["defaultEncoding"];
 }
 
+type File = {
+  fd: number;
+  path: string;
+};
+
+const cleanupSync = (file: File): void => {
+  try {
+    fs.closeSync(file.fd);
+  } catch (error) {
+    // An error here probably means the fd was already closed, but we can
+    // still try to unlink the file.
+  }
+
+  try {
+    fs.unlinkSync(file.path);
+  } catch (error) {
+    // If we are unable to unlink the file, the operating system will clean
+    // up on next restart, since we store these in `os.tmpdir()`.
+  }
+};
+
+// Set of functions to call on exit. Each function should be a call to cleanupSync.
+const cleanupCalls = new Set<() => void>();
+
+// Returns a function that calls cleanupSync.
+// To prevent leaks, the resulting function only holds references to the File object.
+const makeCleanupFn = (file: File): (() => void) => {
+  const fn = (): void => {
+    cleanupSync(file);
+
+    // remove ourselves from set of functions to call
+    cleanupCalls.delete(fn);
+  };
+  return fn;
+};
+
+let exitListenerRegistered = false;
+
+const registerExitListener = (): void => {
+  if (exitListenerRegistered) {
+    return;
+  }
+
+  process.addListener("exit", function fsCapacitorCleanup() {
+    for (const fn of cleanupCalls) {
+      try {
+        fn();
+      } catch (err) {
+        // keep calling other cleanup functions
+      }
+    }
+  });
+  exitListenerRegistered = true;
+};
+
 export class WriteStream extends Writable {
   private _fd: null | number = null;
   private _path: null | string = null;
   private _pos: number = 0;
   private _readStreams: Set<ReadStream> = new Set();
   private _released: boolean = false;
+  private _cleanup: null | (() => void) = null;
+
+  // This is used by tests
+  private static _cleanupCalls = cleanupCalls;
 
   constructor(options?: WriteStreamOptions) {
     super({
@@ -104,45 +163,33 @@ export class WriteStream extends Writable {
         return;
       }
 
-      this._path = path.join(
+      const filePath = path.join(
         os.tmpdir(),
         `capacitor-${buffer.toString("hex")}.tmp`
       );
+      this._path = filePath;
 
       // Create a file in the OS's temporary files directory.
-      fs.open(this._path, "wx+", 0o600, (error, fd) => {
+      fs.open(filePath, "wx+", 0o600, (error, fd) => {
         if (error) {
           this.destroy(error);
           return;
         }
 
-        // Cleanup when the process exits or is killed.
-        process.addListener("exit", this._cleanupSync);
+        // Create a cleanup function that holds no references besides the absolutely necessary ones.
+        this._cleanup = makeCleanupFn({ fd, path: filePath });
+
+        // Add this to the list of calls to make on exit.
+        cleanupCalls.add(this._cleanup);
+
+        // Register exit listener if none has been registered yet
+        registerExitListener();
 
         this._fd = fd;
         this.emit("ready");
       });
     });
   }
-
-  _cleanupSync = (): void => {
-    process.removeListener("exit", this._cleanupSync);
-
-    if (typeof this._fd === "number")
-      try {
-        fs.closeSync(this._fd);
-      } catch (error) {
-        // An error here probably means the fd was already closed, but we can
-        // still try to unlink the file.
-      }
-
-    try {
-      if (this._path) fs.unlinkSync(this._path);
-    } catch (error) {
-      // If we are unable to unlink the file, the operating system will clean
-      // up on next restart, since we use store thes in `os.tmpdir()`
-    }
-  };
 
   _final(callback: (error?: null | Error) => any): void {
     if (typeof this._fd !== "number") {
@@ -207,8 +254,14 @@ export class WriteStream extends Writable {
         this._fd = null;
 
         // We avoid removing this until now in case an exit occurs while
-        // asyncronously cleaning up.
-        process.removeListener("exit", this._cleanupSync);
+        // asynchronously cleaning up.
+        if (this._cleanup) {
+          cleanupCalls.delete(this._cleanup);
+
+          // ensure there are no more references to cleanup function so it can
+          // be garbage collected
+          this._cleanup = null;
+        }
         callback(unlinkError || closeError || error);
       });
     });
