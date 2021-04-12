@@ -22,7 +22,7 @@
   ],
   "main": "dist/index.js",
   "engines": {
-    "node": ">=10"
+    "node": ">=12"
   },
   "browserslist": "node >= 10",
   "devDependencies": {

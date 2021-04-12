@@ -95,3 +95,4 @@
 
 - Upgrade dependencies.
 - **BREAKING:** Drop support for node 13.
+- **BREAKING:** Drop support for node 10.
