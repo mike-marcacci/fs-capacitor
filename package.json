@@ -25,6 +25,11 @@
     "node": ">=12"
   },
   "browserslist": "node >= 12",
+  "ava": {
+    "nodeArguments": [
+      "--experimental-specifier-resolution=node"
+    ]
+  },
   "devDependencies": {
     "@types/node": "^14.14.37",
     "@typescript-eslint/eslint-plugin": "^4.21.0",
@@ -42,10 +47,12 @@
     "lint": "prettier -c '**/*.{json,yml,md,ts}' && eslint src --ext ts",
     "build": "rm -rf dist && tsc",
     "build:development": "rm -rf dist && tsc --watch",
-    "test": "ava --verbose dist/*.test.js",
-    "test:development": "ava --verbose --watch dist/*.test.js",
+    "test": "ava --verbose dist/index.test.js",
+    "test:development": "ava --verbose --watch dist/index.test.js",
     "prepare": "yarn build",
     "prepublishOnly": "yarn install && yarn lint && yarn build && yarn test"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "type": "module",
+  "exports": "./dist/index.js"
 }

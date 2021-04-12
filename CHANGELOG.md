@@ -96,3 +96,4 @@
 - Upgrade dependencies.
 - **BREAKING:** Drop support for node 13.
 - **BREAKING:** Drop support for node 10.
+- **BREAKING:** Change module type to ES module.
