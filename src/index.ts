@@ -3,6 +3,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import { Readable, ReadableOptions, Writable, WritableOptions } from "stream";
+import { EventEmitter } from "events";
 
 export class ReadAfterDestroyedError extends Error {}
 export class ReadAfterReleasedError extends Error {}
@@ -11,6 +12,13 @@ export interface ReadStreamOptions {
   highWaterMark?: ReadableOptions["highWaterMark"];
   encoding?: ReadableOptions["encoding"];
 }
+
+// Work around node's MaxListenersExceededWarning for highly concurrent
+// workloads by creating a "proxy" event emitter. See:
+// https://github.com/mike-marcacci/fs-capacitor/issues/30
+const processExitProxy = new EventEmitter();
+processExitProxy.setMaxListeners(Infinity);
+process.addListener("exit", () => processExitProxy.emit("exit"));
 
 export class ReadStream extends Readable {
   private _pos: number = 0;
@@ -117,7 +125,7 @@ export class WriteStream extends Writable {
         }
 
         // Cleanup when the process exits or is killed.
-        process.addListener("exit", this._cleanupSync);
+        processExitProxy.addListener("exit", this._cleanupSync);
 
         this._fd = fd;
         this.emit("ready");
@@ -126,7 +134,7 @@ export class WriteStream extends Writable {
   }
 
   _cleanupSync = (): void => {
-    process.removeListener("exit", this._cleanupSync);
+    processExitProxy.removeListener("exit", this._cleanupSync);
 
     if (typeof this._fd === "number")
       try {
@@ -208,7 +216,7 @@ export class WriteStream extends Writable {
 
         // We avoid removing this until now in case an exit occurs while
         // asyncronously cleaning up.
-        process.removeListener("exit", this._cleanupSync);
+        processExitProxy.removeListener("exit", this._cleanupSync);
         callback(unlinkError || closeError || error);
       });
     });

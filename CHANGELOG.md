@@ -95,3 +95,4 @@
 
 - Upgrade dependencies.
 - **BREAKING:** Drop support for node 13.
+- Work around node's MaxListenersExceededWarning (#30 via #42)
