@@ -374,7 +374,7 @@ function withChunkSize(size: number): void {
     data += chunk1;
 
     // Wait until this chunk has been written to the buffer
-    await new Promise((resolve) =>
+    await new Promise<void>((resolve) =>
       waitForBytesWritten(capacitor1, size, resolve)
     );
 
@@ -398,7 +398,7 @@ function withChunkSize(size: number): void {
     data += chunk2;
 
     // Wait until this chunk has been written to the buffer
-    await new Promise((resolve) =>
+    await new Promise<void>((resolve) =>
       waitForBytesWritten(capacitor1, 2 * size, resolve)
     );
 
