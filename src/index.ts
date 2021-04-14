@@ -126,7 +126,7 @@ export class WriteStream extends Writable {
         }
 
         // Cleanup when the process exits or is killed.
-        processExitProxy.addListener("exit", this._cleanupSync);
+        processExitProxy.once("exit", this._cleanupSync);
 
         this._fd = fd;
         this.emit("ready");
