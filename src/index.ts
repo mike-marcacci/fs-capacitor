@@ -217,7 +217,7 @@ export class WriteStream extends Writable {
 
         // We avoid removing this until now in case an exit occurs while
         // asyncronously cleaning up.
-        processExitProxy.removeListener("exit", this._cleanupSync);
+        processExitProxy.off("exit", this._cleanupSync);
         callback(unlinkError || closeError || error);
       });
     });
