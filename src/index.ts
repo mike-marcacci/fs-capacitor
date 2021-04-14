@@ -135,7 +135,7 @@ export class WriteStream extends Writable {
   }
 
   _cleanupSync = (): void => {
-    processExitProxy.removeListener("exit", this._cleanupSync);
+    processExitProxy.off("exit", this._cleanupSync);
 
     if (typeof this._fd === "number")
       try {
