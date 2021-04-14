@@ -95,3 +95,4 @@
 
 - Upgrade dependencies.
 - **BREAKING:** Drop support for node 13.
+- Prevent Node.js max listeners exceeded warnings if many `fs-capacitor` `ReadStream` instances are created at the same time, fixing [#30](https://github.com/mike-marcacci/fs-capacitor/issues/30) via [#42](https://github.com/mike-marcacci/fs-capacitor/pull/42).
