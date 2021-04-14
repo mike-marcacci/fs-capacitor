@@ -241,16 +241,13 @@ export class WriteStream extends Writable {
     const readStream = new ReadStream(this, options);
     this._readStreams.add(readStream);
 
-    const remove = (): void => {
-      readStream.off("close", remove);
+    readStream.once("close", (): void => {
       this._readStreams.delete(readStream);
 
       if (this._released && this._readStreams.size === 0) {
         this.destroy();
       }
-    };
-
-    readStream.on("close", remove);
+    });
 
     return readStream;
   }
