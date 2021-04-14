@@ -19,7 +19,7 @@ export interface ReadStreamOptions {
 // https://github.com/mike-marcacci/fs-capacitor/issues/30
 const processExitProxy = new EventEmitter();
 processExitProxy.setMaxListeners(Infinity);
-process.addListener("exit", () => processExitProxy.emit("exit"));
+process.once("exit", () => processExitProxy.emit("exit"));
 
 export class ReadStream extends Readable {
   private _pos: number = 0;
