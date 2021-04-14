@@ -13,8 +13,9 @@ export interface ReadStreamOptions {
   encoding?: ReadableOptions["encoding"];
 }
 
-// Work around node's MaxListenersExceededWarning for highly concurrent
-// workloads by creating a "proxy" event emitter. See:
+// Use a “proxy” event emitter configured to have an infinite maximum number of
+// listeners to prevent Node.js max listeners exceeded warnings if many
+// `fs-capacitor` `ReadStream` instances are created at the same time. See:
 // https://github.com/mike-marcacci/fs-capacitor/issues/30
 const processExitProxy = new EventEmitter();
 processExitProxy.setMaxListeners(Infinity);
