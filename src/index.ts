@@ -75,13 +75,13 @@ export class ReadStream extends Readable {
 
         // Otherwise, wait for the write stream to add more data or finish.
         const retry = (): void => {
-          this._writeStream.removeListener("finish", retry);
-          this._writeStream.removeListener("write", retry);
+          this._writeStream.off("finish", retry);
+          this._writeStream.off("write", retry);
           this._read(n);
         };
 
-        this._writeStream.addListener("finish", retry);
-        this._writeStream.addListener("write", retry);
+        this._writeStream.on("finish", retry);
+        this._writeStream.on("write", retry);
       }
     );
   }
@@ -242,7 +242,7 @@ export class WriteStream extends Writable {
     this._readStreams.add(readStream);
 
     const remove = (): void => {
-      readStream.removeListener("close", remove);
+      readStream.off("close", remove);
       this._readStreams.delete(readStream);
 
       if (this._released && this._readStreams.size === 0) {
@@ -250,7 +250,7 @@ export class WriteStream extends Writable {
       }
     };
 
-    readStream.addListener("close", remove);
+    readStream.on("close", remove);
 
     return readStream;
   }
