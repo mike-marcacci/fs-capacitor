@@ -83,6 +83,7 @@ export class ReadStream extends Readable {
 export interface WriteStreamOptions {
   highWaterMark?: WritableOptions["highWaterMark"];
   defaultEncoding?: WritableOptions["defaultEncoding"];
+  tmpdir?: () => string;
 }
 
 export class WriteStream extends Writable {
@@ -106,7 +107,10 @@ export class WriteStream extends Writable {
         return;
       }
 
-      this._path = join(tmpdir(), `capacitor-${buffer.toString("hex")}.tmp`);
+      this._path = join(
+        (options?.tmpdir ?? tmpdir)(),
+        `capacitor-${buffer.toString("hex")}.tmp`
+      );
 
       // Create a file in the OS's temporary files directory.
       open(this._path, "wx+", 0o600, (error, fd) => {
