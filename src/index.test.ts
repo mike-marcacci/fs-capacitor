@@ -76,6 +76,29 @@ test("Data from a complete stream.", async (t) => {
   );
 });
 
+test("Error while initializing.", async (t) => {
+  // Create a new capacitor
+  const capacitor1 = new WriteStream({ tmpdir: () => "/tmp/does-not-exist" });
+
+  let resolve: () => void, reject: (error: Error) => void;
+  const promise = new Promise<void>((_resolve, _reject) => {
+    resolve = _resolve;
+    reject = _reject;
+  });
+
+  // Synchronously attach an error listener.
+  capacitor1.on("error", (error) => {
+    try {
+      t.is((error as any).code, "ENOENT");
+      resolve();
+    } catch (error) {
+      reject(error);
+    }
+  });
+
+  await promise;
+});
+
 test("Allows specification of encoding in createReadStream.", async (t) => {
   const data = Buffer.from("1".repeat(10), "utf8");
   const source = new Readable({
