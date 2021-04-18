@@ -1,9 +1,11 @@
 name: Continuous Integration
+
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
+
 jobs:
   test:
     name: Test with Node.js v${{ matrix.node }} and ${{ matrix.os }}
