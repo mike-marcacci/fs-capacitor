@@ -106,6 +106,10 @@ Uses node's default of `16384` (16kb). Optional buffer size at which the writabl
 
 Uses node's default of `utf8`. Optional default encoding to use when no encoding is specified as an argument to `stream.write()`. See [node's docs for `stream.Writable`](https://nodejs.org/api/stream.html#stream_constructor_new_stream_writable_options). Possible values depend on the version of node, and are [defined in node's buffer implementation](https://github.com/nodejs/node/blob/master/lib/buffer.js);
 
+#### `.tmpdir`
+
+Used node's [`os.tmpdir`](https://nodejs.org/api/os.html#os_os_tmpdir) by default. This function returns the directory used by fs-capacitor to store file buffers, and is intended primarily for testing and debugging.
+
 ### ReadStream
 
 `ReadStream` extends [`stream.Readable`](https://nodejs.org/api/stream.html#stream_new_stream_readable_options);
