@@ -1,8 +1,7 @@
-import fs from "fs";
-import stream from "stream";
-import test from "ava";
-import { ReadAfterDestroyedError, WriteStream } from "./index";
+import { existsSync } from "fs";
 import { Readable } from "stream";
+import { ReadAfterDestroyedError, WriteStream } from "./index";
+import test from "ava";
 
 process.on("SIGINT", () => process.exit(0));
 process.on("SIGTERM", () => process.exit(0));
@@ -40,7 +39,7 @@ function waitForBytesWritten(
 
 test("Data from a complete stream.", async (t) => {
   let data = "";
-  const source = new stream.Readable({
+  const source = new Readable({
     read() {
       // Intentionally not implementing anything here.
     },
@@ -79,7 +78,7 @@ test("Data from a complete stream.", async (t) => {
 
 test("Allows specification of encoding in createReadStream.", async (t) => {
   const data = Buffer.from("1".repeat(10), "utf8");
-  const source = new stream.Readable({
+  const source = new Readable({
     read() {
       // Intentionally not implementing anything here.
     },
@@ -112,7 +111,7 @@ test("Allows specification of encoding in createReadStream.", async (t) => {
 
 test("Allows specification of defaultEncoding in new WriteStream.", async (t) => {
   const data = Buffer.from("1".repeat(10), "utf8");
-  const source = new stream.Readable({
+  const source = new Readable({
     encoding: "base64",
     read() {
       // Intentionally not implementing anything here.
@@ -167,7 +166,7 @@ test("Allows specification of highWaterMark.", async (t) => {
 
 test("Data from an open stream, 1 chunk, no read streams.", async (t) => {
   let data = "";
-  const source = new stream.Readable({
+  const source = new Readable({
     read() {
       // Intentionally not implementing anything here.
     },
@@ -206,7 +205,7 @@ test("Data from an open stream, 1 chunk, no read streams.", async (t) => {
 
 test("Data from an open stream, 1 chunk, 1 read stream.", async (t) => {
   let data = "";
-  const source = new stream.Readable({
+  const source = new Readable({
     read() {
       // Intentionally not implementing anything here.
     },
@@ -331,7 +330,7 @@ test("Destroy without error.", async (t) => {
 function withChunkSize(size: number): void {
   test(`End-to-end with chunk size: ${size}`, async (t) => {
     let data = "";
-    const source = new stream.Readable({
+    const source = new Readable({
       read() {
         // Intentionally not implementing anything here.
       },
@@ -363,7 +362,7 @@ function withChunkSize(size: number): void {
       "capacitor1._path should be a string"
     );
     t.is(typeof fd, "number", "capacitor1._fd should be a number");
-    t.is(fs.existsSync(path), true, "creates a temp file");
+    t.is(existsSync(path), true, "creates a temp file");
 
     // Pipe data to the capacitor.
     source.pipe(capacitor1);
@@ -498,7 +497,7 @@ function withChunkSize(size: number): void {
     t.is(capacitor1["_fd"], null, "should set fd to null");
     t.is(capacitor1.destroyed, true, "should mark capacitor as destroyed");
     t.is(
-      fs.existsSync(capacitor1["_path"] as string),
+      existsSync(capacitor1["_path"] as string),
       false,
       "removes its temp file"
     );

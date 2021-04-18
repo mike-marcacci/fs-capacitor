@@ -1,7 +1,7 @@
-import crypto from "crypto";
-import fs from "fs";
-import os from "os";
-import path from "path";
+import { randomBytes } from "crypto";
+import { read, open, closeSync, unlinkSync, write, close, unlink } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 import { Readable, ReadableOptions, Writable, WritableOptions } from "stream";
 import { EventEmitter } from "events";
 
@@ -46,44 +46,37 @@ export class ReadStream extends Readable {
     // `bytesRead`, and discard the rest. This prevents node from having to zero
     // out the entire allocation first.
     const buf = Buffer.allocUnsafe(n);
-    fs.read(
-      this._writeStream["_fd"],
-      buf,
-      0,
-      n,
-      this._pos,
-      (error, bytesRead) => {
-        if (error) this.destroy(error);
+    read(this._writeStream["_fd"], buf, 0, n, this._pos, (error, bytesRead) => {
+      if (error) this.destroy(error);
 
-        // Push any read bytes into the local stream buffer.
-        if (bytesRead) {
-          this._pos += bytesRead;
-          this.push(buf.slice(0, bytesRead));
-          return;
-        }
-
-        // If there were no more bytes to read and the write stream is finished,
-        // than this stream has reached the end.
-        if (
-          ((this._writeStream as any) as {
-            _writableState: { finished: boolean };
-          })._writableState.finished
-        ) {
-          this.push(null);
-          return;
-        }
-
-        // Otherwise, wait for the write stream to add more data or finish.
-        const retry = (): void => {
-          this._writeStream.off("finish", retry);
-          this._writeStream.off("write", retry);
-          this._read(n);
-        };
-
-        this._writeStream.on("finish", retry);
-        this._writeStream.on("write", retry);
+      // Push any read bytes into the local stream buffer.
+      if (bytesRead) {
+        this._pos += bytesRead;
+        this.push(buf.slice(0, bytesRead));
+        return;
       }
-    );
+
+      // If there were no more bytes to read and the write stream is finished,
+      // than this stream has reached the end.
+      if (
+        ((this._writeStream as any) as {
+          _writableState: { finished: boolean };
+        })._writableState.finished
+      ) {
+        this.push(null);
+        return;
+      }
+
+      // Otherwise, wait for the write stream to add more data or finish.
+      const retry = (): void => {
+        this._writeStream.off("finish", retry);
+        this._writeStream.off("write", retry);
+        this._read(n);
+      };
+
+      this._writeStream.on("finish", retry);
+      this._writeStream.on("write", retry);
+    });
   }
 }
 
@@ -107,19 +100,16 @@ export class WriteStream extends Writable {
     });
 
     // Generate a random filename.
-    crypto.randomBytes(16, (error, buffer) => {
+    randomBytes(16, (error, buffer) => {
       if (error) {
         this.destroy(error);
         return;
       }
 
-      this._path = path.join(
-        os.tmpdir(),
-        `capacitor-${buffer.toString("hex")}.tmp`
-      );
+      this._path = join(tmpdir(), `capacitor-${buffer.toString("hex")}.tmp`);
 
       // Create a file in the OS's temporary files directory.
-      fs.open(this._path, "wx+", 0o600, (error, fd) => {
+      open(this._path, "wx+", 0o600, (error, fd) => {
         if (error) {
           this.destroy(error);
           return;
@@ -139,14 +129,16 @@ export class WriteStream extends Writable {
 
     if (typeof this._fd === "number")
       try {
-        fs.closeSync(this._fd);
+        closeSync(this._fd);
       } catch (error) {
         // An error here probably means the fd was already closed, but we can
         // still try to unlink the file.
       }
 
     try {
-      if (this._path) fs.unlinkSync(this._path);
+      if (this._path !== null) {
+        unlinkSync(this._path);
+      }
     } catch (error) {
       // If we are unable to unlink the file, the operating system will clean
       // up on next restart, since we use store thes in `os.tmpdir()`
@@ -171,7 +163,7 @@ export class WriteStream extends Writable {
       return;
     }
 
-    fs.write(this._fd, chunk, 0, chunk.length, this._pos, (error) => {
+    write(this._fd, chunk, 0, chunk.length, this._pos, (error) => {
       if (error) {
         callback(error);
         return;
@@ -207,10 +199,10 @@ export class WriteStream extends Writable {
     }
 
     // Close the file descriptor.
-    fs.close(fd, (closeError) => {
+    close(fd, (closeError) => {
       // An error here probably means the fd was already closed, but we can
       // still try to unlink the file.
-      fs.unlink(path, (unlinkError) => {
+      unlink(path, (unlinkError) => {
         // If we are unable to unlink the file, the operating system will
         // clean up on next restart, since we use store thes in `os.tmpdir()`
         this._fd = null;
