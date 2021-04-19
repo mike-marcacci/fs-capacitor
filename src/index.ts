@@ -83,6 +83,7 @@ export class ReadStream extends Readable {
 export interface WriteStreamOptions {
   highWaterMark?: WritableOptions["highWaterMark"];
   defaultEncoding?: WritableOptions["defaultEncoding"];
+  tmpdir?: () => string;
 }
 
 export class WriteStream extends Writable {
@@ -106,7 +107,10 @@ export class WriteStream extends Writable {
         return;
       }
 
-      this._path = join(tmpdir(), `capacitor-${buffer.toString("hex")}.tmp`);
+      this._path = join(
+        (options?.tmpdir ?? tmpdir)(),
+        `capacitor-${buffer.toString("hex")}.tmp`
+      );
 
       // Create a file in the OS's temporary files directory.
       open(this._path, "wx+", 0o600, (error, fd) => {
@@ -123,6 +127,32 @@ export class WriteStream extends Writable {
       });
     });
   }
+
+  _cleanup = (callback: (error: null | Error) => void): void => {
+    const fd = this._fd;
+    const path = this._path;
+
+    if (typeof fd !== "number" || typeof path !== "string") {
+      callback(null);
+      return;
+    }
+
+    // Close the file descriptor.
+    close(fd, (closeError) => {
+      // An error here probably means the fd was already closed, but we can
+      // still try to unlink the file.
+      unlink(path, (unlinkError) => {
+        // If we are unable to unlink the file, the operating system will
+        // clean up on next restart, since we use store thes in `os.tmpdir()`
+        this._fd = null;
+
+        // We avoid removing this until now in case an exit occurs while
+        // asyncronously cleaning up.
+        processExitProxy.off("exit", this._cleanupSync);
+        callback(unlinkError ?? closeError);
+      });
+    });
+  };
 
   _cleanupSync = (): void => {
     processExitProxy.off("exit", this._cleanupSync);
@@ -191,32 +221,28 @@ export class WriteStream extends Writable {
     error: undefined | null | Error,
     callback: (error?: null | Error) => any
   ): void {
-    const fd = this._fd;
-    const path = this._path;
-    if (typeof fd !== "number" || typeof path !== "string") {
-      this.once("ready", () => this._destroy(error, callback));
+    // Destroy all attached read streams.
+    for (const readStream of this._readStreams) {
+      readStream.destroy(error || undefined);
+    }
+
+    // This capacitor is fully initialized.
+    if (typeof this._fd === "number" && typeof this._path === "string") {
+      this._cleanup((cleanupError) => callback(cleanupError ?? error));
       return;
     }
 
-    // Close the file descriptor.
-    close(fd, (closeError) => {
-      // An error here probably means the fd was already closed, but we can
-      // still try to unlink the file.
-      unlink(path, (unlinkError) => {
-        // If we are unable to unlink the file, the operating system will
-        // clean up on next restart, since we use store thes in `os.tmpdir()`
-        this._fd = null;
-
-        // We avoid removing this until now in case an exit occurs while
-        // asyncronously cleaning up.
-        processExitProxy.off("exit", this._cleanupSync);
-        callback(unlinkError || closeError || error);
+    // This capacitor has not yet finished initialization; if initialization
+    // does complete, immediately clean up after.
+    this.once("ready", () => {
+      this._cleanup((cleanupError) => {
+        if (cleanupError) {
+          this.emit("error", cleanupError);
+        }
       });
     });
 
-    // Destroy all attached read streams.
-    for (const readStream of this._readStreams)
-      readStream.destroy(error || undefined);
+    callback(error);
   }
 
   createReadStream(options?: ReadStreamOptions): ReadStream {
