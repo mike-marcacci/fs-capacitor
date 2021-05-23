@@ -18,7 +18,9 @@
     "clone"
   ],
   "files": [
-    "dist/index.js"
+    "dist/index.d.ts",
+    "dist/index.js",
+    "dist/index.js.map"
   ],
   "main": "dist/index.js",
   "engines": {
