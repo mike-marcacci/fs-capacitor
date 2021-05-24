@@ -99,3 +99,7 @@
 - **BREAKING:** Drop support for node 13.
 - **BREAKING:** Drop support for node 10.
 - **BREAKING:** Change module type to ES module.
+
+### 7.0.1
+
+- Publish TS definitions and map via [#54](https://github.com/mike-marcacci/fs-capacitor/pull/54).
