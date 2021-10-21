@@ -92,7 +92,7 @@ test("Error while initializing.", async (t) => {
       t.is((error as any).code, "ENOENT");
       resolve();
     } catch (error) {
-      reject(error);
+      reject(error as Error);
     }
   });
 
