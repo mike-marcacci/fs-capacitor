@@ -24,7 +24,7 @@
   ],
   "main": "dist/index.js",
   "engines": {
-    "node": ">=12"
+    "node": "^12.22.0 || ^14.17.0 || >=16.0.0"
   },
   "browserslist": "node >= 12",
   "ava": {
