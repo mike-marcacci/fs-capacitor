@@ -26,7 +26,16 @@
   "engines": {
     "node": "^12.22.0 || ^14.17.0 || >=16.0.0"
   },
-  "browserslist": "node >= 12",
+  "browserslist": {
+    "production": [
+      "node >= 12"
+    ],
+    "development": [
+      "node ^12.22.0",
+      "node ^14.17.0",
+      "node >=16.0.0"
+    ]
+  },
   "ava": {
     "nodeArguments": [
       "--experimental-specifier-resolution=node"
