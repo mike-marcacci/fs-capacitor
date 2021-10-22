@@ -103,3 +103,7 @@
 ### 7.0.1
 
 - Publish TS definitions and map via [#54](https://github.com/mike-marcacci/fs-capacitor/pull/54).
+
+### next
+
+- Upgrade development dependencies.
