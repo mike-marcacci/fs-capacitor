@@ -298,12 +298,12 @@ test("Destroy with error.", async (t) => {
     true,
     "should mark attached read streams as destroyed"
   );
-  t.is(
+  t.is<undefined | Error, Error>(
     capacitor2Stream2Error,
     error,
     "should emit the original error on read stream"
   );
-  t.is(
+  t.is<undefined | Error, Error>(
     capacitor2Error,
     error,
     "should emit the original error on write stream"
