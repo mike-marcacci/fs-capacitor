@@ -91,11 +91,11 @@
 - Upgrade dependencies.
 - Update option types to match changes in @types/node.
 
-### 7.0.0
+## 7.0.0
 
 - Upgrade dependencies.
 - Prevent Node.js max listeners exceeded warnings if many `fs-capacitor` `ReadStream` instances are created at the same time, fixing [#30](https://github.com/mike-marcacci/fs-capacitor/issues/30) via [#42](https://github.com/mike-marcacci/fs-capacitor/pull/42).
-- Ensure initialization failures are reported, fixing [#45](https://github.com/mike-marcacci/fs-capacitor/issues/45) via [#46](https://github.com/mike-marcacci/fs-capacitor/pull/46/files).
+- Ensure initialization failures are reported, fixing [#45](https://github.com/mike-marcacci/fs-capacitor/issues/45) via [#46](https://github.com/mike-marcacci/fs-capacitor/pull/46).
 - **BREAKING:** Drop support for node 13.
 - **BREAKING:** Drop support for node 10.
 - **BREAKING:** Change module type to ES module.
