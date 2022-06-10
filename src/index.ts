@@ -65,7 +65,11 @@ export class ReadStream extends Readable {
           }
         )._writableState.finished
       ) {
-        this.push(null);
+        // Check if we have consumed the whole file up to where
+        // the write stream has written before ending the stream
+        if (this._pos < (this._writeStream as any as { _pos: number })._pos)
+          this._read(n);
+        else this.push(null);
         return;
       }
 
