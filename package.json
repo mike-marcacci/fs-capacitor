@@ -24,14 +24,13 @@
   ],
   "main": "dist/index.js",
   "engines": {
-    "node": "^12.22.0 || ^14.17.0 || >=16.0.0"
+    "node": "^14.17.0 || >=16.0.0"
   },
   "browserslist": {
     "production": [
-      "node >= 12"
+      "node >= 14"
     ],
     "development": [
-      "node ^12.22.0",
       "node ^14.17.0",
       "node >=16.0.0"
     ]
