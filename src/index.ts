@@ -57,7 +57,7 @@ export class ReadStream extends Readable {
       }
 
       // If there were no more bytes to read and the write stream is finished,
-      // than this stream has reached the end.
+      // then this stream has reached the end.
       if (
         (
           this._writeStream as any as {
