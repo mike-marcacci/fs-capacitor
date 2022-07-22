@@ -104,7 +104,7 @@
 
 - Publish TS definitions and map via [#54](https://github.com/mike-marcacci/fs-capacitor/pull/54).
 
-### next
+### 8.0.0
 
 - Upgrade development dependencies.
 - **BREAKING:** Drop support for node 12.
