@@ -115,7 +115,7 @@ export class WriteStream extends Writable {
 
       this._path = join(
         (options?.tmpdir ?? tmpdir)(),
-        `capacitor-${buffer.toString("hex")}.tmp`
+        `capacitor-${buffer.toString("hex")}.tmp`,
       );
 
       // Create a file in the OS's temporary files directory.
@@ -192,7 +192,7 @@ export class WriteStream extends Writable {
   _write(
     chunk: Buffer,
     encoding: string,
-    callback: (error?: null | Error) => any
+    callback: (error?: null | Error) => any,
   ): void {
     if (typeof this._fd !== "number") {
       this.once("ready", () => this._write(chunk, encoding, callback));
@@ -225,7 +225,7 @@ export class WriteStream extends Writable {
 
   _destroy(
     error: undefined | null | Error,
-    callback: (error?: null | Error) => any
+    callback: (error?: null | Error) => any,
   ): void {
     // Destroy all attached read streams.
     for (const readStream of this._readStreams) {
@@ -254,12 +254,12 @@ export class WriteStream extends Writable {
   createReadStream(options?: ReadStreamOptions): ReadStream {
     if (this.destroyed)
       throw new ReadAfterDestroyedError(
-        "A ReadStream cannot be created from a destroyed WriteStream."
+        "A ReadStream cannot be created from a destroyed WriteStream.",
       );
 
     if (this._released)
       throw new ReadAfterReleasedError(
-        "A ReadStream cannot be created from a released WriteStream."
+        "A ReadStream cannot be created from a released WriteStream.",
       );
 
     const readStream = new ReadStream(this, options);

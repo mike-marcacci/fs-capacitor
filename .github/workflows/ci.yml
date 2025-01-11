@@ -20,10 +20,10 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Install dependancies
-        run: yarn install --frozen-lockfile
+        run: npm ci
       - name: Lint the source
-        run: yarn lint
+        run: npm run lint
       - name: Transpile into dist
-        run: yarn build
+        run: npm run build
       - name: Run tests
-        run: yarn test
+        run: npm test
